@@ -163,7 +163,7 @@ export function useVisualEffects() {
       delay: config.delay || 0,
       easing: config.easing || 'ease',
       fill: config.fillMode || 'both',
-      iterations: config.loop ? 'infinite' : 1,
+      iterations: config.loop ? Infinity : 1,
       direction: config.direction || 'normal'
     }
     
@@ -507,7 +507,7 @@ export function useVisualEffects() {
   }
   
   // Screen shake effect
-  function shakeScreen(intensity: number = 10, duration: number = 500) {
+  function shakeScreen(_intensity: number = 10, duration: number = 500) {
     if (reducedMotion.value) return
     
     const element = document.documentElement

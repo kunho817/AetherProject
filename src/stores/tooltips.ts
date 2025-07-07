@@ -324,7 +324,7 @@ export const useTooltipStore = defineStore('tooltips', () => {
             action: 'click',
             condition: () => {
               const gameStore = useGameStore()
-              return gameStore.filaments[0].owned > 0
+              return gameStore.filaments[0].owned.gt(0)
             },
             next: 'production_increase'
           },
@@ -344,7 +344,7 @@ export const useTooltipStore = defineStore('tooltips', () => {
             position: TooltipPosition.RIGHT,
             condition: () => {
               const gameStore = useGameStore()
-              return gameStore.filaments[0].owned >= 10
+              return gameStore.filaments[0].owned.gte(10)
             },
             next: 'milestone_achieved'
           },

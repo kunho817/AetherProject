@@ -13,7 +13,8 @@ export interface FilamentTier {
   costFactor: number
   baseProduction: Decimal
   productionMultiplier: number
-  owned: Decimal // Changed to Decimal for continuous production
+  purchased: Decimal // Filaments directly purchased by user
+  owned: Decimal // Total filaments (purchased + produced)
   milestone: number
   evolution: number
 }

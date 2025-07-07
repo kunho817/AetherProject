@@ -329,13 +329,20 @@ export const useNebulaStore = defineStore('nebula', () => {
   }
   
   function checkPatternAt(pattern: NebulaPattern, startX: number, startY: number): boolean {
+    // Ensure grid is initialized
+    if (!grid.value || grid.value.length === 0) return false
+    
     return pattern.pattern.every(patternCell => {
       const x = startX + patternCell.x
       const y = startY + patternCell.y
       
       if (x < 0 || x >= gridSize.value || y < 0 || y >= gridSize.value) return false
       
+      // Check if row exists
+      if (!grid.value[y]) return false
+      
       const gridCell = grid.value[y][x]
+      if (!gridCell) return false
       
       // Check basic type match
       if (gridCell.type !== patternCell.type) return false
@@ -572,6 +579,11 @@ export const useNebulaStore = defineStore('nebula', () => {
         activePatterns.value = saveData.activePatterns
       } else {
         activePatterns.value = []
+      }
+      
+      // Ensure grid is initialized before checking patterns
+      if (!grid.value || grid.value.length === 0) {
+        initializeGrid()
       }
       
       // Recheck patterns to ensure consistency

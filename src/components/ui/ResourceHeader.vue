@@ -3,35 +3,44 @@
     <div class="header-content">
       <h1 class="game-title">AETHER - Glare Layer</h1>
       <div class="resources-grid">
-        <div class="resource-display hover-lift" :class="{ 'resource-updated': stardustUpdated }">
+        <div class="resource-display hover-lift resource-primary" :class="{ 'resource-updated': stardustUpdated }">
           <div class="resource-label">Stardust</div>
           <div class="resource-value" ref="stardustValueRef">{{ format(stardust.amount) }}</div>
           <div class="resource-rate">+{{ format(totalStardustProduction) }}/s</div>
+          <div class="resource-efficiency" v-if="getProductionEfficiency() !== 1">
+            Efficiency: {{ (getProductionEfficiency() * 100).toFixed(1) }}%
+          </div>
           <div class="resource-particles" ref="stardustParticlesRef"></div>
         </div>
-        <div class="resource-display hover-lift" :class="{ 'resource-updated': starlightUpdated }">
+        <div class="resource-display hover-lift resource-premium" :class="{ 'resource-updated': starlightUpdated }">
           <div class="resource-label">Starlight</div>
           <div class="resource-value" ref="starlightValueRef">{{ format(starlight.amount) }}</div>
+          <div class="resource-rate" v-if="canGetStarlight">Ready for reset!</div>
+          <div class="resource-rate" v-else>{{ format(getStarlightProgress()) }} / {{ format(D('1e100')) }}</div>
           <div class="resource-glow"></div>
         </div>
-        <div class="resource-display hover-lift" v-if="starRails > 0">
+        <div class="resource-display hover-lift resource-special" v-if="starRails > 0">
           <div class="resource-label">Star Rails</div>
           <div class="resource-value">{{ starRails }}</div>
+          <div class="resource-rate">+{{ getRailGeneration() }}/starburst</div>
           <div class="resource-icon">🚂</div>
         </div>
-        <div class="resource-display hover-lift" v-if="nebularEssence > 0">
+        <div class="resource-display hover-lift resource-special" v-if="nebularEssence > 0">
           <div class="resource-label">Nebular Essence</div>
-          <div class="resource-value">{{ nebularEssence }}</div>
+          <div class="resource-value">{{ format(nebularEssence, 1) }}</div>
+          <div class="resource-rate">+{{ format(getEssenceGeneration()) }}/purchase</div>
           <div class="resource-icon">🌌</div>
         </div>
-        <div class="resource-display hover-lift" v-if="stellarEnergy > 0">
+        <div class="resource-display hover-lift resource-energy" v-if="stellarEnergy > 0">
           <div class="resource-label">Stellar Energy</div>
           <div class="resource-value">{{ format(stellarEnergy, 1) }}</div>
+          <div class="resource-rate">Pulsation: {{ getPulsationState() }}</div>
           <div class="resource-icon">⚡</div>
         </div>
-        <div class="resource-display hover-lift" v-if="cosmicFragments > 0">
+        <div class="resource-display hover-lift resource-special" v-if="cosmicFragments > 0">
           <div class="resource-label">Cosmic Fragments</div>
           <div class="resource-value">{{ cosmicFragments }}</div>
+          <div class="resource-rate">Rail Road bonus</div>
           <div class="resource-icon">💎</div>
         </div>
       </div>
@@ -40,12 +49,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/gameState'
 import { usePulsationStore } from '@/stores/pulsation'
 import { useRailRoadStore } from '@/stores/railroad'
 import { format } from '@/utils/formatting'
+import { D } from '@/utils/decimal'
 import { useVisualEffects } from '@/composables/useVisualEffects'
 
 const gameStore = useGameStore()
@@ -74,42 +84,121 @@ const starlightUpdated = ref(false)
 const previousStardust = ref(stardust.value.amount)
 const previousStarlight = ref(starlight.value.amount)
 
-// Watch for resource changes and animate
-watch(() => stardust.value.amount, async (newValue, oldValue) => {
-  if (newValue.gt(oldValue) && stardustValueRef.value) {
-    stardustUpdated.value = true
-    
-    // Animate the value change
-    await animateNumber(stardustValueRef.value, {
-      from: oldValue.toNumber(),
-      to: newValue.toNumber(),
-      duration: 800,
-      decimals: 0
-    })
-    
-    // Add success animation
-    await animate(stardustValueRef.value, 'success')
-    
-    setTimeout(() => {
-      stardustUpdated.value = false
-    }, 1000)
-  }
-  previousStardust.value = newValue
+// Track reset events for proper display updates
+const isResetting = ref(false)
+watch(() => gameStore.starburstCount, () => {
+  isResetting.value = true
+  setTimeout(() => {
+    isResetting.value = false
+  }, 1000)
 })
 
+watch(() => gameStore.starlightResetCount, () => {
+  isResetting.value = true
+  setTimeout(() => {
+    isResetting.value = false
+  }, 1500)
+})
+
+// Advanced resource calculations
+const canGetStarlight = computed(() => gameStore.canGetStarlight)
+
+function getProductionEfficiency(): number {
+  // Calculate efficiency based on system interactions
+  const pulsationBonus = pulsationStore.currentBonus?.stardustMultiplier || D(1)
+  const railBonus = railRoadStore.totalProductionBonus || D(1)
+  const baseEfficiency = pulsationBonus.mul(railBonus).toNumber()
+  return Math.min(baseEfficiency, 10) // Cap at 10x for display
+}
+
+function getStarlightProgress() {
+  return stardust.value.amount
+}
+
+function getRailGeneration(): number {
+  if (!canGetStarlight.value) return 0
+  const potentialStarlight = 1
+  return Math.max(1, Math.floor(Math.pow(potentialStarlight / 10, 0.5)))
+}
+
+function getEssenceGeneration() {
+  // 0.01% of purchase cost becomes essence
+  const avgCost = gameStore.filaments.reduce((sum, f) => 
+    sum.add(gameStore.getFilamentCost(gameStore.filaments.indexOf(f))), D(0)
+  ).div(gameStore.filaments.length)
+  return avgCost.mul(0.0001)
+}
+
+function getPulsationState(): string {
+  return (pulsationStore as any)?.currentState || 'stable'
+}
+
+// Watch for resource changes and animate
+watch(() => stardust.value.amount, async (newValue, oldValue) => {
+  if (!oldValue) oldValue = D(0)
+  
+  // Check for reset (value went down significantly or to zero)
+  const isReset = newValue.lt(oldValue.mul(0.1)) || newValue.eq(0)
+  
+  if (stardustValueRef.value) {
+    if (isReset && oldValue.gt(0)) {
+      // Handle reset animation
+      stardustUpdated.value = true
+      await animate(stardustValueRef.value, 'bounce')
+      setTimeout(() => {
+        stardustUpdated.value = false
+      }, 500)
+    } else if (newValue.gt(oldValue)) {
+      // Handle normal increase
+      stardustUpdated.value = true
+      
+      // Animate the value change
+      await animateNumber(stardustValueRef.value, {
+        from: oldValue.toNumber(),
+        to: newValue.toNumber(),
+        duration: 800,
+        decimals: 0
+      })
+      
+      // Add success animation
+      await animate(stardustValueRef.value, 'success')
+      
+      setTimeout(() => {
+        stardustUpdated.value = false
+      }, 1000)
+    }
+  }
+  previousStardust.value = newValue
+}, { immediate: true })
+
 watch(() => starlight.value.amount, async (newValue, oldValue) => {
-  if (newValue.gt(oldValue) && starlightValueRef.value) {
-    starlightUpdated.value = true
-    
-    // Special effect for starlight gain
-    await animate(starlightValueRef.value, 'starburst')
-    
-    setTimeout(() => {
-      starlightUpdated.value = false
-    }, 2000)
+  if (!oldValue) oldValue = D(0)
+  
+  // Check for reset or gain
+  const isReset = newValue.lt(oldValue) && newValue.eq(0)
+  const isGain = newValue.gt(oldValue)
+  
+  if (starlightValueRef.value) {
+    if (isReset && oldValue.gt(0)) {
+      // Handle starlight reset (shouldn't happen, but just in case)
+      starlightUpdated.value = true
+      await animate(starlightValueRef.value, 'bounce')
+      setTimeout(() => {
+        starlightUpdated.value = false
+      }, 1000)
+    } else if (isGain) {
+      starlightUpdated.value = true
+      
+      // Special effect for starlight gain
+      await animate(starlightValueRef.value, 'purchase')
+      
+      setTimeout(() => {
+        starlightUpdated.value = false
+      }, 2000)
+    }
   }
   previousStarlight.value = newValue
-})
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -260,4 +349,93 @@ watch(() => starlight.value.amount, async (newValue, oldValue) => {
   font-size: 11px;
   color: var(--accent-green);
   margin-top: 2px;
+}
+
+.resource-efficiency {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  color: var(--accent-blue);
+  margin-top: 1px;
+  opacity: 0.8;
+}
+
+/* Resource type styling */
+.resource-primary {
+  border-color: var(--accent-yellow);
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.resource-premium {
+  border-color: var(--accent-purple);
+  background: rgba(147, 51, 234, 0.05);
+}
+
+.resource-special {
+  border-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.resource-energy {
+  border-color: var(--accent-green);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.resource-primary:hover {
+  background: rgba(255, 215, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+}
+
+.resource-premium:hover {
+  background: rgba(147, 51, 234, 0.1);
+  box-shadow: 0 4px 15px rgba(147, 51, 234, 0.2);
+}
+
+.resource-special:hover {
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.resource-energy:hover {
+  background: rgba(34, 197, 94, 0.1);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+}
+
+/* Enhanced responsiveness */
+@media (max-width: 768px) {
+  .header {
+    padding: 12px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .game-title {
+    font-size: 20px;
+    text-align: center;
+  }
+  
+  .resources-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .resource-display {
+    padding: 8px 12px;
+    min-width: unset;
+  }
+  
+  .resource-value {
+    font-size: 14px;
+  }
+  
+  .resource-rate, .resource-efficiency {
+    font-size: 10px;
+  }
+  
+  .resource-icon {
+    font-size: 14px;
+  }
 }</style>

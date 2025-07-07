@@ -102,7 +102,7 @@ export const useStarEchoStore = defineStore('starecho', () => {
     // Check if filament tier is unlocked and owned
     if (filamentTier < 0 || filamentTier >= gameStore.filaments.length) return false
     if (filamentTier > gameStore.maxUnlockedTier) return false
-    if (gameStore.filaments[filamentTier].owned === 0) return false
+    if (gameStore.filaments[filamentTier].owned.eq(0)) return false
     
     return true
   }

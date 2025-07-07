@@ -123,7 +123,7 @@ export const useEvolutionStore = defineStore('evolution', () => {
     
     if (!filament || !unlockedStages.value.has(stage)) return false
     if (filament.evolution >= stage) return false
-    if (filament.owned < 100) return false // Need 100+ purchases
+    if (filament.owned.lt(100)) return false // Need 100+ purchases
     
     const evolution = evolutionData.value.get(`stage_${stage}`)
     if (!evolution) return false

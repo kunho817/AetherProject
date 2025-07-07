@@ -47,7 +47,7 @@ export const useAchievementStore = defineStore('achievements', () => {
         type: AchievementType.SINGLE,
         condition: () => {
           const gameStore = useGameStore()
-          return gameStore.filaments.some(f => f.owned > 0)
+          return gameStore.filaments.some(f => f.owned.gt(0))
         },
         unlocked: false,
         completed: false,
@@ -532,6 +532,12 @@ export const useAchievementStore = defineStore('achievements', () => {
     for (const achievement of achievements.value.values()) {
       if (achievement.completed) continue
       
+      // Check if condition function exists
+      if (!achievement.condition || typeof achievement.condition !== 'function') {
+        console.warn(`Achievement ${achievement.id} has no condition function`)
+        continue
+      }
+      
       // Check unlock conditions first
       if (!achievement.unlocked && achievement.condition()) {
         unlockAchievement(achievement.id)
@@ -820,8 +826,19 @@ export const useAchievementStore = defineStore('achievements', () => {
   function load(data: any) {
     if (!data) return
     
+    // First, re-initialize achievements to restore condition functions
+    initializeAchievements()
+    
+    // Then load saved states
     if (data.achievements) {
-      achievements.value = new Map(data.achievements)
+      const savedAchievements = new Map(data.achievements) as Map<string, any>
+      savedAchievements.forEach((savedAchievement, id) => {
+        const achievement = achievements.value.get(id)
+        if (achievement && savedAchievement) {
+          achievement.unlocked = savedAchievement.unlocked || false
+          achievement.completed = savedAchievement.completed || false
+        }
+      })
     }
     
     if (data.statistics) {

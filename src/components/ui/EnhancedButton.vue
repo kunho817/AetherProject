@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { useMobileOptimization } from '@/composables/useMobileOptimization'
 
 interface ButtonParticle {
@@ -139,9 +139,9 @@ const shouldShowShine = computed(() =>
   !mobileOpt.shouldReduceEffects.value && 
   mobileOpt.complexShadowsEnabled.value
 )
-const effectiveAnimationDuration = computed(() => 
-  mobileOpt.getOptimalAnimationDuration.value
-)
+// const effectiveAnimationDuration = computed(() => 
+//   mobileOpt.getOptimalAnimationDuration.value
+// )
 
 const emit = defineEmits<{
   click: [event: MouseEvent]
@@ -720,7 +720,7 @@ onUnmounted(() => {
   }
 }
 
-/* Mobile optimizations */
+/* Enhanced mobile optimizations */
 .mobile-device .btn-particles,
 .no-particles .btn-particles {
   display: none;
@@ -732,9 +732,24 @@ onUnmounted(() => {
 }
 
 .mobile-device .enhanced-btn {
-  /* Larger touch targets */
+  /* WCAG AA compliant touch targets */
   min-height: 48px;
   min-width: 48px;
+  padding: 14px 24px;
+  font-size: 16px; /* Prevents iOS zoom */
+  border-radius: 8px;
+  margin: 4px; /* Spacing between touch targets */
+  /* Enhanced touch feedback */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.mobile-device .enhanced-btn:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+  transition: all 0.1s ease;
 }
 
 .low-end-device .enhanced-btn {
@@ -765,10 +780,49 @@ onUnmounted(() => {
   .enhanced-btn {
     /* Better touch feedback */
     -webkit-tap-highlight-color: rgba(0, 180, 216, 0.3);
+    /* Improved spacing for fingers */
+    margin: 6px 4px;
+    /* Consistent sizing across devices */
+    min-height: 48px;
+    min-width: 88px; /* Common button width */
+  }
+  
+  .btn-small {
+    min-height: 44px; /* Still touch-friendly */
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
+  .btn-medium {
+    min-height: 48px;
+    padding: 14px 24px;
+    font-size: 16px;
+  }
+  
+  .btn-large {
+    min-height: 52px;
+    padding: 16px 28px;
+    font-size: 18px;
   }
   
   .enhanced-btn:active {
-    transform: scale(0.98);
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Better focus states for keyboard navigation */
+  .enhanced-btn:focus {
+    outline: 3px solid var(--accent-blue);
+    outline-offset: 2px;
+  }
+  
+  /* Improved contrast for accessibility */
+  .enhanced-btn {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .enhanced-btn:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 }
 

@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useMobileOptimization } from '@/composables/useMobileOptimization'
 
 interface Particle {
@@ -308,7 +308,7 @@ function removeParticle(particleId: string) {
 }
 
 // Get particle style
-function getParticleStyle(particle: Particle) {
+function getParticleStyle(particle: Particle): Record<string, string | number> {
   const config = particleConfigs[particle.type]
   
   return {
@@ -321,7 +321,7 @@ function getParticleStyle(particle: Particle) {
     borderRadius: particle.type === 'starburst' ? '0' : '50%',
     transform: `rotate(${particle.rotation || 0}deg) scale(${particle.scale || 1})`,
     animationDuration: `${particle.duration}ms`,
-    boxShadow: config.glow ? `0 0 ${particle.size * 2}px ${particle.color}` : 'none',
+    boxShadow: (config as any)?.glow ? `0 0 ${particle.size * 2}px ${particle.color}` : 'none',
     pointerEvents: 'none',
     zIndex: particle.type === 'achievement' ? 1000 : 100
   }
@@ -368,7 +368,8 @@ function createBurstEffect(x: number, y: number, type: ParticleType = 'stardust'
   for (let i = 0; i < effectiveCount; i++) {
     const angle = (Math.PI * 2 * i) / count
     const speed = Math.random() * 3 + 2
-    const distance = Math.random() * 50 + 30
+    // Distance calculated for potential future use
+    // const distance = Math.random() * 50 + 30
     
     createParticle(type, x, y, {
       vx: Math.cos(angle) * speed,
@@ -628,32 +629,91 @@ onUnmounted(() => {
 }
 
 /* Keyframe animations */
-@keyframes starlight-particle {
+@keyframes stardust-particle {
   0% {
     transform: translateY(0) scale(0) rotate(0deg);
     opacity: 0;
   }
+  15% {
+    opacity: 1;
+    transform: scale(1.2) rotate(45deg);
+  }
+  85% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100px) scale(0.3) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes starlight-particle {
+  0% {
+    transform: translateY(0) scale(0) rotate(0deg);
+    opacity: 0;
+    filter: brightness(1);
+  }
   10% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(30deg);
+    filter: brightness(1.5);
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    filter: brightness(2);
   }
   90% {
     opacity: 1;
+    filter: brightness(1.2);
   }
   100% {
     transform: translateY(-120px) scale(0.5) rotate(360deg);
     opacity: 0;
+    filter: brightness(0.5);
   }
 }
 
 @keyframes energy-particle {
   0% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) rotate(0deg);
     opacity: 1;
+    filter: brightness(1);
+  }
+  25% {
+    transform: scale(1.3) rotate(90deg);
+    filter: brightness(1.8);
+  }
+  75% {
+    transform: translateY(-60px) scale(0.8) rotate(270deg);
+    opacity: 0.7;
   }
   100% {
-    transform: translateY(-80px) scale(0.3);
+    transform: translateY(-80px) scale(0.3) rotate(360deg);
     opacity: 0;
+    filter: brightness(0.2);
+  }
+}
+
+@keyframes cosmic-particle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.2) rotate(90deg);
+    filter: hue-rotate(90deg);
+  }
+  75% {
+    opacity: 0.9;
+    transform: scale(1.5) rotate(270deg);
+    filter: hue-rotate(270deg);
+  }
+  100% {
+    transform: scale(2.5) rotate(360deg) translateY(-40px);
+    opacity: 0;
+    filter: hue-rotate(360deg);
   }
 }
 
@@ -661,17 +721,25 @@ onUnmounted(() => {
   0% {
     transform: scale(0) rotate(0deg);
     opacity: 0;
+    filter: blur(0px);
   }
   20% {
     opacity: 1;
     transform: scale(1) rotate(90deg);
+    filter: blur(1px);
+  }
+  50% {
+    transform: scale(1.8) rotate(180deg);
+    filter: blur(2px);
   }
   80% {
     opacity: 0.8;
+    filter: blur(3px);
   }
   100% {
     transform: scale(2) rotate(360deg);
     opacity: 0;
+    filter: blur(5px);
   }
 }
 
@@ -728,21 +796,85 @@ onUnmounted(() => {
   }
 }
 
+@keyframes starburst-explosion {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+    filter: brightness(2);
+  }
+  25% {
+    transform: scale(1.5) rotate(90deg);
+    opacity: 1;
+    filter: brightness(3);
+  }
+  50% {
+    transform: scale(3) rotate(180deg);
+    opacity: 0.8;
+    filter: brightness(2.5);
+  }
+  75% {
+    transform: scale(4) rotate(270deg);
+    opacity: 0.4;
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: scale(5) rotate(360deg);
+    opacity: 0;
+    filter: brightness(0.5);
+  }
+}
+
 @keyframes dust-float {
   0% {
-    transform: translateY(100vh) translateX(0);
+    transform: translateY(100vh) translateX(0) rotate(0deg);
     opacity: 0;
   }
   10% {
     opacity: 1;
+    transform: translateY(90vh) translateX(5px) rotate(45deg);
+  }
+  50% {
+    transform: translateY(50vh) translateX(10px) rotate(180deg);
   }
   90% {
     opacity: 1;
+    transform: translateY(10vh) translateX(15px) rotate(315deg);
   }
   100% {
-    transform: translateY(-20px) translateX(20px);
+    transform: translateY(-20px) translateX(20px) rotate(360deg);
     opacity: 0;
   }
+}
+
+@keyframes energy-flow {
+  0% {
+    transform: translateY(100%) scaleY(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(75%) scaleY(0.5);
+  }
+  50% {
+    transform: translateY(50%) scaleY(1);
+  }
+  75% {
+    transform: translateY(25%) scaleY(0.8);
+  }
+  100% {
+    transform: translateY(0%) scaleY(0);
+    opacity: 0;
+  }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
 @keyframes twinkle {
@@ -750,10 +882,64 @@ onUnmounted(() => {
   50% { opacity: 0.8; }
 }
 
+/* Enhanced particle effects */
+.particle-stardust::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: radial-gradient(circle, var(--accent-yellow) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: sparkle 1s ease-in-out infinite;
+}
+
+.particle-energy::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, var(--accent-blue) 0%, transparent 50%);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: electric-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+@keyframes electric-pulse {
+  0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.3); }
+}
+
+/* Performance optimizations */
+.particle-container {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.particle {
+  will-change: transform, opacity;
+  contain: layout style;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .particle-container {
     display: none; /* Disable particles on mobile for performance */
+  }
+  
+  .mobile-device .particle-stardust::after,
+  .mobile-device .particle-energy::before {
+    display: none;
   }
 }
 

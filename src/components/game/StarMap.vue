@@ -80,7 +80,7 @@ import { useStarEchoStore } from '@/stores/starecho'
 import { usePulsationStore } from '@/stores/pulsation'
 import { format } from '@/utils/formatting'
 import { D } from '@/utils/decimal'
-import StarEcho from './StarEcho.vue'
+import StarEcho from '@/components/game/StarEcho.vue'
 import ParticleSystem from '@/components/effects/ParticleSystem.vue'
 import { useVisualEffects } from '@/composables/useVisualEffects'
 
@@ -89,7 +89,7 @@ const starEchoStore = useStarEchoStore()
 const pulsationStore = usePulsationStore()
 const { filaments, starburstCount, starlight } = storeToRefs(gameStore)
 const { unlocked: starEchoUnlocked } = storeToRefs(starEchoStore)
-const { currentState: pulsationState } = storeToRefs(pulsationStore)
+const pulsationState = computed(() => (pulsationStore as any)?.currentState || 'stable')
 const { animate, createParticleBurst, shakeScreen } = useVisualEffects()
 
 // Refs
@@ -181,7 +181,7 @@ async function handleStarClick() {
     
     // Screen effects for dramatic impact
     createParticleBurst(rect.left + centerX, rect.top + centerY, {
-      type: 'starburst',
+      type: 'celebration',
       count: 25,
       colors: ['#ffd700', '#ff8c00', '#ff6b35']
     })
@@ -288,14 +288,34 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.3s ease;
   overflow: hidden;
+  /* Enhanced touch targets */
+  min-width: 48px;
+  min-height: 48px;
+  touch-action: manipulation;
 }
 
-.central-star:hover {
+.central-star:hover, .central-star:focus {
   transform: translate(-50%, -50%) scale(1.05);
   box-shadow: 
     0 0 80px var(--accent-yellow),
     0 0 160px var(--accent-orange),
     0 0 240px rgba(255, 107, 53, 0.7);
+}
+
+/* Enhanced pulsation states */
+.central-star.star-expansion {
+  animation: starExpansion 2s ease-out;
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.central-star.star-contraction {
+  animation: starContraction 1.5s ease-in;
+  transform: translate(-50%, -50%) scale(0.8);
+}
+
+.central-star.star-stabilization {
+  animation: starStabilization 3s ease-in-out;
+  transform: translate(-50%, -50%) scale(1.0);
 }
 
 .star-core {
@@ -363,6 +383,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   position: relative;
+  /* Enhanced mobile touch targets */
+  min-width: 48px;
+  min-height: 48px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .filament:hover {
@@ -409,6 +435,96 @@ onUnmounted(() => {
 @keyframes glow-pulse {
   0%, 100% { opacity: 0.2; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+/* Enhanced pulsation state animations with visual feedback */
+@keyframes starExpansion {
+  0% { 
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 60px var(--accent-yellow), 0 0 120px var(--accent-orange);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 0 90px var(--accent-yellow), 0 0 160px var(--accent-orange);
+    filter: brightness(1.2);
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.3);
+    box-shadow: 0 0 120px var(--accent-yellow), 0 0 200px var(--accent-orange);
+    filter: brightness(1.4);
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(1.25);
+    box-shadow: 0 0 110px var(--accent-yellow), 0 0 190px var(--accent-orange);
+    filter: brightness(1.3);
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 0 100px var(--accent-yellow), 0 0 180px var(--accent-orange);
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes starContraction {
+  0% { 
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 60px var(--accent-yellow), 0 0 120px var(--accent-orange);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translate(-50%, -50%) scale(0.85);
+    box-shadow: 0 0 45px var(--accent-yellow), 0 0 90px var(--accent-orange);
+    filter: brightness(0.9);
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(0.6);
+    box-shadow: 0 0 30px var(--accent-yellow), 0 0 60px var(--accent-orange);
+    filter: brightness(0.8);
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(0.7);
+    box-shadow: 0 0 35px var(--accent-yellow), 0 0 70px var(--accent-orange);
+    filter: brightness(0.85);
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(0.8);
+    box-shadow: 0 0 40px var(--accent-yellow), 0 0 80px var(--accent-orange);
+    filter: brightness(0.9);
+  }
+}
+
+@keyframes starStabilization {
+  0% { 
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 0 100px var(--accent-yellow), 0 0 180px var(--accent-orange);
+    filter: brightness(1.1);
+  }
+  20% { 
+    transform: translate(-50%, -50%) scale(0.8);
+    box-shadow: 0 0 40px var(--accent-yellow), 0 0 80px var(--accent-orange);
+    filter: brightness(0.9);
+  }
+  40% { 
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 0 80px var(--accent-yellow), 0 0 140px var(--accent-orange);
+    filter: brightness(1.05);
+  }
+  60% { 
+    transform: translate(-50%, -50%) scale(0.9);
+    box-shadow: 0 0 50px var(--accent-yellow), 0 0 100px var(--accent-orange);
+    filter: brightness(0.95);
+  }
+  80% {
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 0 70px var(--accent-yellow), 0 0 130px var(--accent-orange);
+    filter: brightness(1.02);
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(1.0);
+    box-shadow: 0 0 60px var(--accent-yellow), 0 0 120px var(--accent-orange);
+    filter: brightness(1);
+  }
 }
 
 .filament-count {
@@ -489,11 +605,42 @@ onUnmounted(() => {
   .central-star {
     width: 80px;
     height: 80px;
+    /* Ensure touch target compliance even on mobile */
+    min-width: 48px;
+    min-height: 48px;
   }
   
   .filament {
-    width: 30px;
-    height: 30px;
-    top: -15px;
+    width: 48px; /* WCAG compliance */
+    height: 48px;
+    top: -24px;
+    /* Enhanced mobile interaction */
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .filament:active {
+    transform: translateX(-50%) scale(0.95);
+    border-color: var(--accent-blue);
+  }
+  
+  .filament-count {
+    font-size: 11px !important;
+    font-weight: 800;
+  }
+  
+  /* Simplified animations for mobile */
+  .central-star.star-expansion,
+  .central-star.star-contraction,
+  .central-star.star-stabilization {
+    animation-duration: 1s !important;
+  }
+  
+  /* Enhanced touch feedback */
+  .info-card {
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 }</style>

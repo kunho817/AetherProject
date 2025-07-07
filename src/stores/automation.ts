@@ -92,7 +92,7 @@ export const useAutomationStore = defineStore('automation', () => {
         case 'filament':
           if (primaryTrigger.tier !== undefined) {
             const filament = gameStore.filaments[primaryTrigger.tier]
-            primaryMet = filament && filament.owned >= (primaryTrigger.value as number)
+            primaryMet = filament && filament.owned.gte(primaryTrigger.value as number)
           }
           break
         case 'time':
@@ -117,7 +117,7 @@ export const useAutomationStore = defineStore('automation', () => {
         case 'filament':
           if (secondaryTrigger.tier !== undefined) {
             const filament = gameStore.filaments[secondaryTrigger.tier]
-            secondaryMet = filament && filament.owned >= (secondaryTrigger.value as number)
+            secondaryMet = filament && filament.owned.gte(secondaryTrigger.value as number)
           }
           break
         case 'time':
@@ -407,6 +407,23 @@ export const useAutomationStore = defineStore('automation', () => {
     intervalHistory.value = []
   }
 
+  // Computed properties for component usage
+  const unlocked = computed(() => starburstAutomation.value.unlocked)
+  
+  const availableAutomations = computed(() => [
+    {
+      id: 'starburst',
+      name: 'Auto Starburst',
+      description: 'Automatically perform Starburst when conditions are met',
+      enabled: starburstAutomation.value.enabled,
+      active: starburstAutomation.value.enabled && shouldAutoStarburst.value,
+      interval: starburstAutomation.value.settings.delayBetweenBursts * 1000,
+      cost: D(50) // 50 Starlight to unlock
+    }
+  ])
+  
+  const unlockRequirement = computed(() => 50) // 50 Starlight required
+
   return {
     // State
     automationSettings,
@@ -415,6 +432,9 @@ export const useAutomationStore = defineStore('automation', () => {
     // Computed
     canUnlockStarburstAutomation,
     shouldAutoStarburst,
+    unlocked,
+    availableAutomations,
+    unlockRequirement,
     
     // Actions
     unlockStarburstAutomation,
@@ -424,6 +444,8 @@ export const useAutomationStore = defineStore('automation', () => {
     performAutoStarburst,
     resetAutomationStats,
     applyPreset,
+    purchaseAutomation: unlockStarburstAutomation,
+    toggleAutomation: toggleStarburstAutomation,
     tick,
     save,
     load,

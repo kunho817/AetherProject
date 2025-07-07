@@ -28,9 +28,9 @@ export interface NebulaPattern {
 }
 
 export interface NebulaBonus {
-  type: 'production' | 'multiplier' | 'cost_reduction' | 'special'
+  type: 'production' | 'multiplier' | 'cost_reduction' | 'special' | 'starlight_gain' | 'cost_exponent'
   value: Decimal
-  target: 'stardust' | 'filaments' | 'all' | 'synergy' | 'hierarchy_synergy'
+  target: 'stardust' | 'filaments' | 'all' | 'synergy' | 'hierarchy_synergy' | 'starlight'
 }
 
 export interface NebulaState {

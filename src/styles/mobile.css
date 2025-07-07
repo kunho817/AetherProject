@@ -32,18 +32,48 @@
     display: none;
   }
 
-  /* Touch-friendly sizing */
+  /* Touch-friendly sizing - WCAG 2.1 AA compliance */
   .mobile-device .btn,
   .mobile-device .enhanced-btn {
     min-height: 48px;
-    padding: 12px 20px;
+    min-width: 48px;
+    padding: 14px 24px;
     font-size: 16px; /* Prevents zoom on iOS */
+    border-radius: 8px; /* Larger radius for easier targeting */
+    margin: 4px; /* Spacing between touch targets */
   }
 
   .mobile-device .tab-button {
     min-height: 48px;
-    padding: 12px 8px;
-    font-size: 14px;
+    min-width: 80px;
+    padding: 14px 12px;
+    font-size: 16px; /* Consistent sizing */
+    border-radius: 6px;
+    margin: 2px;
+  }
+  
+  /* Enhanced filament touch targets */
+  .mobile-device .filament {
+    min-width: 48px !important;
+    min-height: 48px !important;
+    border-radius: 50%;
+    cursor: pointer;
+    touch-action: manipulation; /* Prevents double-tap zoom */
+  }
+  
+  /* Improved interactive elements */
+  .mobile-device .card {
+    padding: 16px;
+    margin: 8px 0;
+    border-radius: 12px;
+    touch-action: manipulation;
+  }
+  
+  .mobile-device .input-field {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px; /* Prevents zoom */
+    border-radius: 8px;
   }
 
   /* Simplified grid layouts */
@@ -92,6 +122,48 @@
     right: 10px !important;
     transform: none !important;
     max-width: none !important;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  /* Enhanced mobile navigation */
+  .mobile-device .main-container {
+    grid-template-columns: 1fr !important;
+    padding: 8px !important;
+    gap: 12px !important;
+  }
+  
+  .mobile-device .side-panel {
+    order: -1; /* Move to top on mobile */
+    flex-direction: row !important;
+    overflow-x: auto;
+    gap: 12px;
+  }
+  
+  .mobile-device .panel-section {
+    min-width: 250px;
+    flex-shrink: 0;
+  }
+  
+  /* Improved scroll behavior */
+  .mobile-device {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Focus and active states for touch */
+  .mobile-device .btn:active,
+  .mobile-device .enhanced-btn:active {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  
+  .mobile-device .tab-button:active {
+    background: var(--accent-blue);
+    color: white;
   }
 }
 

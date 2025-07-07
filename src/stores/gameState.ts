@@ -61,7 +61,8 @@ export const useGameStore = defineStore('game', () => {
       costFactor: data.costFactor,
       baseProduction: D(data.productionMultiplier),
       productionMultiplier: data.productionMultiplier,
-      owned: ZERO, // Changed to Decimal
+      purchased: ZERO, // Filaments directly purchased by user
+      owned: ZERO, // Total filaments (purchased + produced)
       milestone: 0,
       evolution: 0
     }))
@@ -171,11 +172,12 @@ export const useGameStore = defineStore('game', () => {
 
   // Computed values
   const totalStardustProduction = computed(() => {
-    let total = stardust.value.production
-    
-    // Only Tier 1 (Orion) filaments produce Stardust directly
-    const tier1Filament = filaments.value[0] // Orion Filament
-    if (tier1Filament.owned.gt(0)) {
+    try {
+      let total = stardust.value.production
+      
+      // Only Tier 1 (Orion) filaments produce Stardust directly
+      const tier1Filament = filaments.value[0] // Orion Filament
+      if (tier1Filament.purchased.gt(0)) { // Must have purchased Tier 1 filaments
       const evolutionStore = getEvolutionStore()
       const evolutionEffects = evolutionStore?.getFilamentEvolutionEffects(0) || {
         productionExponent: ONE,
@@ -183,12 +185,14 @@ export const useGameStore = defineStore('game', () => {
         uniqueAbility: null
       }
       
+      // Production based on total owned, but milestone based on purchased
       let base = tier1Filament.baseProduction.mul(tier1Filament.owned)
       
       // Apply evolution production exponent
       base = base.pow(evolutionEffects.productionExponent)
       
-      const milestoneBonus = D(2).pow(Math.floor(tier1Filament.owned.toNumber() / 10))
+      // Milestone bonus based on PURCHASED filaments only
+      const milestoneBonus = D(2).pow(Math.floor(tier1Filament.purchased.toNumber() / 10))
       
       // No hierarchy synergy for Tier 1 (it's the bottom tier)
       
@@ -197,6 +201,9 @@ export const useGameStore = defineStore('game', () => {
       if (evolutionEffects.uniqueAbility?.includes('Orion\'s Light')) {
         uniqueBonus = D(5) // Base production ×5
       }
+      
+      // Apply purchased multiplier (consistent with hierarchical system)
+      base = base.mul(tier1Filament.purchased)
       
       total = total.add(base.mul(milestoneBonus).mul(uniqueBonus))
     }
@@ -217,20 +224,20 @@ export const useGameStore = defineStore('game', () => {
     if (starburstCount.value > 0) {
       let starburstMult = ONE
       
-      // Calculate base Starburst multiplier with tiered scaling
+      // Enhanced tiered scaling formula from modular documentation
       if (starburstCount.value <= 4) {
-        // 1st-4th Starburst: x2 each (cumulative x16)
+        // 1st-4th Starburst: x2 each (cumulative up to x16)
         starburstMult = D(2).pow(starburstCount.value)
       } else if (starburstCount.value <= 8) {
-        // 5th-8th Starburst: x3 each (cumulative x16 × 3^(count-4))
+        // 5th-8th Starburst: x3 each (enhanced scaling period)
         const earlyBonus = D(2).pow(4) // x16 from first 4
-        const midBonus = D(3).pow(starburstCount.value - 4)
+        const midBonus = D(3).pow(starburstCount.value - 4) // x3 per additional
         starburstMult = earlyBonus.mul(midBonus)
       } else {
-        // 9th onwards: x1.5 each (cumulative x432 × 1.5^(count-8))
+        // 9th+ Starbursts: Continued x3 scaling (exponential late game)
         const earlyBonus = D(2).pow(4) // x16 from first 4
-        const midBonus = D(3).pow(4) // x81 from next 4
-        const lateBonus = D(1.5).pow(starburstCount.value - 8)
+        const midBonus = D(3).pow(4) // x81 from 5th-8th
+        const lateBonus = D(3).pow(starburstCount.value - 8) // Continued x3
         starburstMult = earlyBonus.mul(midBonus).mul(lateBonus)
       }
       
@@ -298,29 +305,72 @@ export const useGameStore = defineStore('game', () => {
     if (nebulaStore) {
       total = total.mul(nebulaStore.totalBonus.production)
       total = total.mul(nebulaStore.totalBonus.multiplier)
+      }
+      
+      return total
+    } catch (error) {
+      console.error('Error in totalStardustProduction computation:', error)
+      return stardust.value.production // Fallback to base production
     }
-    
-    return total
   })
   
   const canStarburst = computed(() => {
-    // 1st Starburst: When first purchasing Tier 4 filament (Horsehead) or reaching 1e20 Stardust
+    // Hard-coded Starburst conditions based on highest unlocked tier
+    
+    // 1st Starburst: 25 Tier 4 Filaments (index 3)
     if (starburstCount.value === 0) {
-      return filaments.value[3].owned.gt(0) || stardust.value.amount.gte('1e20')
+      return filaments.value[3].purchased.gte(25)
     }
     
-    // 2nd-9th: When reaching 25 of current highest tier filament
-    if (starburstCount.value >= 1 && starburstCount.value <= 8) {
-      const highestTier = getHighestUnlockedTier()
-      if (highestTier >= 0) {
-        return filaments.value[highestTier].owned.gte(25)
-      }
+    // 2nd Starburst: 25 of highest unlocked tier (Tier 5, index 4)
+    if (starburstCount.value === 1) {
+      return filaments.value[4].purchased.gte(25)
     }
     
-    // 10th onwards: When reaching 50+(5×Starburst count) Remnant Filaments (Tier 10)
-    if (starburstCount.value >= 9) {
-      const requiredRemnants = 50 + (5 * starburstCount.value)
-      return filaments.value[9].owned.gte(requiredRemnants)
+    // 3rd Starburst: 25 of highest unlocked tier (Tier 6, index 5)  
+    if (starburstCount.value === 2) {
+      return filaments.value[5].purchased.gte(25)
+    }
+    
+    // 4th Starburst: 25 of highest unlocked tier (Tier 7, index 6)
+    if (starburstCount.value === 3) {
+      return filaments.value[6].purchased.gte(25)
+    }
+    
+    // 5th Starburst: 25 of highest unlocked tier (Tier 8, index 7)
+    if (starburstCount.value === 4) {
+      return filaments.value[7].purchased.gte(25)
+    }
+    
+    // 6th Starburst: 25 of highest unlocked tier (Tier 9, index 8)
+    if (starburstCount.value === 5) {
+      return filaments.value[8].purchased.gte(25)
+    }
+    
+    // 7th Starburst: 25 of highest unlocked tier (Tier 10, index 9) - ALL TIERS NOW UNLOCKED
+    if (starburstCount.value === 6) {
+      return filaments.value[9].purchased.gte(25)
+    }
+    
+    // 8th Starburst: START SCALING - 50 of Tier 10 (index 9)
+    if (starburstCount.value === 7) {
+      return filaments.value[9].purchased.gte(50)
+    }
+    
+    // 9th Starburst: 75 of Tier 10 (index 9)
+    if (starburstCount.value === 8) {
+      return filaments.value[9].purchased.gte(75)
+    }
+    
+    // 10th Starburst: 100 of Tier 10 (index 9)
+    if (starburstCount.value === 9) {
+      return filaments.value[9].purchased.gte(100)
+    }
+    
+    // 11th+ Starbursts: Continuing to scale by +25 each time
+    if (starburstCount.value >= 10) {
+      const requiredTier10 = 100 + (25 * (starburstCount.value - 9)) // 125, 150, 175, 200...
+      return filaments.value[9].purchased.gte(requiredTier10)
     }
     
     return false
@@ -333,25 +383,30 @@ export const useGameStore = defineStore('game', () => {
     return Math.min(9, 3 + starburstCount.value) // 0-indexed, so tier 4 = index 3
   })
   
-  function getHighestUnlockedTier(): number {
-    for (let i = maxUnlockedTier.value; i >= 0; i--) {
-      if (filaments.value[i].owned.gt(0)) {
-        return i
-      }
-    }
-    return 0
-  }
+  // Function kept for potential future use
+  // function getHighestUnlockedTier(): number {
+  //   for (let i = maxUnlockedTier.value; i >= 0; i--) {
+  //     if (filaments.value[i].owned.gt(0)) {
+  //       return i
+  //     }
+  //   }
+  //   return 0
+  // }
+  
+  // Removed getHighestPurchasedTier() - no longer needed with hard-coded Starburst conditions
   
   const canGetStarlight = computed(() => stardust.value.amount.gte('1e100'))
   
   // Hierarchical filament production system
   function updateFilamentProduction(deltaTime: number) {
-    // Process from highest tier to lowest (Tier 10 → Tier 9 → ... → Tier 2 → Tier 1)
-    for (let tier = 9; tier >= 1; tier--) { // 9 = Tier 10 (index 9), down to 1 = Tier 2 (index 1)
-      const producerFilament = filaments.value[tier] // Higher tier that produces
-      const targetFilament = filaments.value[tier - 1] // Lower tier that gets produced
-      
-      if (producerFilament.owned.gt(0)) {
+    try {
+      // Process from highest tier to lowest (Tier 10 → Tier 9 → ... → Tier 2 → Tier 1)
+      for (let tier = 9; tier >= 1; tier--) { // 9 = Tier 10 (index 9), down to 1 = Tier 2 (index 1)
+        const producerFilament = filaments.value[tier] // Higher tier that produces
+        const targetFilament = filaments.value[tier - 1] // Lower tier that gets produced
+        
+        // Only produce if user has actually purchased filaments of this tier
+        if (producerFilament.purchased.gt(0)) {
         // Calculate production with all bonuses
         const evolutionStore = getEvolutionStore()
         const evolutionEffects = evolutionStore?.getFilamentEvolutionEffects(tier) || {
@@ -360,20 +415,22 @@ export const useGameStore = defineStore('game', () => {
           uniqueAbility: null
         }
         
+        // Production = Total Owned * User Purchased influence
+        // Base production uses total owned but is influenced by purchased count
         let production = producerFilament.baseProduction.mul(producerFilament.owned)
         
         // Apply evolution production exponent
         production = production.pow(evolutionEffects.productionExponent)
         
-        // Apply milestone bonus
-        const milestoneBonus = D(2).pow(Math.floor(producerFilament.owned.toNumber() / 10))
+        // Milestone bonus based on PURCHASED filaments only
+        const milestoneBonus = D(2).pow(Math.floor(producerFilament.purchased.toNumber() / 10))
         production = production.mul(milestoneBonus)
         
-        // Apply hierarchy synergy
-        if (tier > 0 && filaments.value[tier - 1].owned.gt(0)) {
-          const hierarchyBonus = filaments.value[tier - 1].owned.pow(0.5).mul(producerFilament.owned.pow(0.3)).mul(evolutionEffects.hierarchySynergyMultiplier)
-          production = production.mul(hierarchyBonus)
-        }
+        // Apply user purchased factor (this is the key: purchased filaments enable production)
+        production = production.mul(producerFilament.purchased)
+        
+        // NO hierarchy synergy in production calculation
+        // Synergy bonuses should be separate from core production to avoid confusion
         
         // Apply unique abilities for Stage 3 evolution
         if (evolutionEffects.uniqueAbility) {
@@ -389,6 +446,7 @@ export const useGameStore = defineStore('game', () => {
         if (starburstCount.value > 0) {
           let starburstMult = ONE
           
+          // Apply same enhanced scaling to filament production
           if (starburstCount.value <= 4) {
             starburstMult = D(2).pow(starburstCount.value)
           } else if (starburstCount.value <= 8) {
@@ -398,7 +456,7 @@ export const useGameStore = defineStore('game', () => {
           } else {
             const earlyBonus = D(2).pow(4)
             const midBonus = D(3).pow(4)
-            const lateBonus = D(1.5).pow(starburstCount.value - 8)
+            const lateBonus = D(3).pow(starburstCount.value - 8) // Continued x3
             starburstMult = earlyBonus.mul(midBonus).mul(lateBonus)
           }
           
@@ -437,21 +495,30 @@ export const useGameStore = defineStore('game', () => {
           production = production.mul(eventStore.globalEventMultiplier)
         }
         
-        // Add production to target filament
+        // Add production to target filament's total owned (not purchased)
         const gain = production.mul(deltaTime)
-        targetFilament.owned = targetFilament.owned.add(gain)
+        
+          // Only add meaningful production gains to prevent floating point accumulation
+          if (gain.gt(0)) {
+            targetFilament.owned = targetFilament.owned.add(gain)
+          }
+        }
       }
+    } catch (error) {
+      console.error('Error in updateFilamentProduction:', error)
+      // Don't let production errors break the entire game loop
     }
   }
   
   // Game loop
   function tick(deltaTime: number) {
-    // Update filament production (hierarchical chain)
-    updateFilamentProduction(deltaTime)
-    
-    // Update stardust
-    const stardustGain = totalStardustProduction.value.mul(deltaTime)
-    stardust.value.amount = stardust.value.amount.add(stardustGain)
+    try {
+      // Update filament production (hierarchical chain)
+      updateFilamentProduction(deltaTime)
+      
+      // Update stardust
+      const stardustGain = totalStardustProduction.value.mul(deltaTime)
+      stardust.value.amount = stardust.value.amount.add(stardustGain)
     
     // Nebular Essence is now generated only from filament purchases
     // (moved to buyFilament function to match concept)
@@ -503,10 +570,14 @@ export const useGameStore = defineStore('game', () => {
       automationStore.tick()
     }
     
-    // Check Nebula expansion conditions
-    const nebulaStore = getNebulaStore()
-    if (nebulaStore) {
-      nebulaStore.checkExpansion()
+      // Check Nebula expansion conditions
+      const nebulaStore = getNebulaStore()
+      if (nebulaStore) {
+        nebulaStore.checkExpansion()
+      }
+    } catch (error) {
+      console.error('Error in game tick:', error)
+      // Don't let tick errors break the game loop entirely
     }
   }
   
@@ -541,9 +612,9 @@ export const useGameStore = defineStore('game', () => {
       }
     }
     
-    // Use floor of owned for cost calculation (only count whole filaments)
-    const ownedForCost = D(Math.floor(filament.owned.toNumber()))
-    let finalCost = filament.baseCost.mul(adjustedCostFactor.pow(ownedForCost))
+    // Cost based on purchased filaments (what user actually bought)
+    const purchasedForCost = D(Math.floor(filament.purchased.toNumber()))
+    let finalCost = filament.baseCost.mul(adjustedCostFactor.pow(purchasedForCost))
     
     // Apply Nebula Square pattern bonus (cost^0.6 exponent)
     const nebulaStore = getNebulaStore()
@@ -566,7 +637,24 @@ export const useGameStore = defineStore('game', () => {
   }
   
   function canBuyFilament(tier: number): boolean {
-    return stardust.value.amount.gte(getFilamentCost(tier))
+    // Check if we have enough stardust
+    if (!stardust.value.amount.gte(getFilamentCost(tier))) {
+      return false
+    }
+    
+    // Check if tier is unlocked based on Starburst count
+    if (tier > maxUnlockedTier.value) {
+      return false
+    }
+    
+    // Hierarchical purchase requirement: All previous tiers must have at least 1 purchased
+    for (let i = 0; i < tier; i++) {
+      if (filaments.value[i].purchased.eq(0)) {
+        return false
+      }
+    }
+    
+    return true
   }
   
   function buyFilament(tier: number, amount = 1) {
@@ -579,11 +667,12 @@ export const useGameStore = defineStore('game', () => {
       if (stardust.value.amount.gte(cost)) {
         stardust.value.amount = stardust.value.amount.sub(cost)
         totalCost = totalCost.add(cost)
-        filament.owned = filament.owned.add(1)
+        filament.purchased = filament.purchased.add(1)
+        filament.owned = filament.owned.add(1) // Initially same as purchased
         bought++
         
-        // Update milestone
-        filament.milestone = Math.floor(filament.owned.toNumber() / 10)
+        // Update milestone based on purchased count
+        filament.milestone = Math.floor(filament.purchased.toNumber() / 10)
       } else {
         break
       }
@@ -633,6 +722,7 @@ export const useGameStore = defineStore('game', () => {
     starburstCount.value = 0
     
     filaments.value.forEach(filament => {
+      filament.purchased = ZERO
       filament.owned = ZERO
       filament.milestone = 0
       filament.evolution = 0
@@ -669,6 +759,7 @@ export const useGameStore = defineStore('game', () => {
       
       // Reset filaments but keep milestone progress (according to concept)
       filaments.value.forEach(filament => {
+        filament.purchased = ZERO
         filament.owned = ZERO
         // milestone and evolution are retained
       })
@@ -703,6 +794,7 @@ export const useGameStore = defineStore('game', () => {
       starburstCount: starburstCount.value,
       starlightResetCount: starlightResetCount.value,
       filaments: filaments.value.map(f => ({
+        purchased: f.purchased.toString(),
         owned: f.owned.toString(),
         milestone: f.milestone,
         evolution: f.evolution
@@ -806,6 +898,7 @@ export const useGameStore = defineStore('game', () => {
       // Load filaments
       saveData.filaments?.forEach((saved: any, index: number) => {
         if (filaments.value[index]) {
+          filaments.value[index].purchased = D(saved.purchased || saved.owned || 0) // Backward compatibility
           filaments.value[index].owned = D(saved.owned || 0)
           filaments.value[index].milestone = saved.milestone || 0
           filaments.value[index].evolution = saved.evolution || 0
@@ -912,6 +1005,7 @@ export const useGameStore = defineStore('game', () => {
     starlightResetCount.value = 0
     
     filaments.value.forEach(filament => {
+      filament.purchased = ZERO
       filament.owned = ZERO
       filament.milestone = 0
       filament.evolution = 0
