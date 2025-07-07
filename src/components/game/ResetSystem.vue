@@ -227,16 +227,29 @@ function performStarburst() {
 function getStarburstRequirementText() {
   const count = starburstCount.value
   
+  // Match the actual gameStore logic exactly
   if (count === 0) {
-    return 'Purchase Tier 4 OR reach 1e20 Stardust'
-  } else if (count >= 1 && count <= 3) {
-    return '25 of highest tier filament'
-  } else if (count >= 4 && count <= 7) {
-    const req = 50 + (count - 4) * 25
-    return `${req} of highest tier filament`
+    return '25 Tier 4 Filaments'
+  } else if (count === 1) {
+    return '25 Tier 5 Filaments'
+  } else if (count === 2) {
+    return '25 Tier 6 Filaments'
+  } else if (count === 3) {
+    return '25 Tier 7 Filaments'
+  } else if (count === 4) {
+    return '25 Tier 8 Filaments'
+  } else if (count === 5) {
+    return '25 Tier 9 Filaments'
+  } else if (count === 6) {
+    return '25 Tier 10 Filaments'
+  } else if (count === 7) {
+    return '25 Tier 10 Filaments'
   } else {
-    const req = 50 + (5 * (count - 8))
-    return `${req} Remnant Filaments`
+    // 8th+ Starburst - scaling requirements
+    const baseReq = 25
+    const scaling = count - 7 // 8th=1, 9th=2, etc.
+    const requirement = baseReq + (scaling * 25)
+    return `${requirement} Tier 10 Filaments`
   }
 }
 
@@ -244,15 +257,24 @@ function getCurrentProgressText() {
   const count = starburstCount.value
   
   if (count === 0) {
-    const tier4 = gameStore.filaments[3].owned.gt(0)
-    const stardust = format(gameStore.stardust.amount)
-    return tier4 ? 'Tier 4 purchased ✓' : stardust
-  } else if (count >= 8) {
-    return format(gameStore.filaments[9].owned)
-  } else {
-    const highestTier = getHighestUnlockedTier()
-    return format(gameStore.filaments[highestTier]?.owned || D(0))
+    return `${format(gameStore.filaments[3].purchased)} / 25`
+  } else if (count === 1) {
+    return `${format(gameStore.filaments[4].purchased)} / 25`
+  } else if (count === 2) {
+    return `${format(gameStore.filaments[5].purchased)} / 25`
+  } else if (count === 3) {
+    return `${format(gameStore.filaments[6].purchased)} / 25`
+  } else if (count === 4) {
+    return `${format(gameStore.filaments[7].purchased)} / 25`
+  } else if (count === 5) {
+    return `${format(gameStore.filaments[8].purchased)} / 25`
+  } else if (count >= 6) {
+    const baseReq = 25
+    const scaling = count >= 8 ? count - 7 : 0
+    const requirement = baseReq + (scaling * 25)
+    return `${format(gameStore.filaments[9].purchased)} / ${requirement}`
   }
+  return '0 / 25'
 }
 
 function getHighestUnlockedTier() {

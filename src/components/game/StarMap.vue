@@ -16,12 +16,26 @@
           :class="{ 
             'star-expansion': pulsationState === 'expansion',
             'star-contraction': pulsationState === 'contraction',
-            'star-stabilization': pulsationState === 'stabilization'
+            'star-stabilization': pulsationState === 'stabilization',
+            'nova-preparation': isNovaPreparation
           }"
           @click="handleStarClick"
         >
-          <div class="star-core"></div>
+          <div class="star-core">
+            <div class="production-display">{{ format(totalStardustProduction) }}/s</div>
+          </div>
           <div class="star-flare"></div>
+          <div class="star-aura" v-if="starburstCount > 0"></div>
+          
+          <!-- Energy Flow Lines -->
+          <div class="energy-flows" v-if="showEnergyFlows">
+            <div 
+              v-for="(connection, index) in activeConnections" 
+              :key="index"
+              class="energy-line"
+              :style="getEnergyLineStyle(connection)"
+            ></div>
+          </div>
         </div>
         
         <!-- Filament Orbits -->
@@ -35,7 +49,9 @@
             class="filament"
             :class="{ 
               'filament-active': filament.owned.gt(0),
-              'filament-pulsing': filament.owned.gt(0) && index === activePulsingIndex
+              'filament-pulsing': filament.owned.gt(0) && index === activePulsingIndex,
+              'filament-evolved': filament.evolution > 0,
+              'filament-locked': isFilamentLocked(index)
             }"
             :style="getFilamentStyle(filament)"
             @click="selectFilament(filament)"
@@ -43,7 +59,49 @@
             @mouseleave="handleFilamentHover(index, false)"
           >
             <span class="filament-count">{{ Math.floor(filament.owned.toNumber()) }}</span>
+            <span class="filament-purchased" v-if="filament.purchased.gt(0)">{{ Math.floor(filament.purchased.toNumber()) }}</span>
             <div class="filament-glow" v-if="filament.owned.gt(0)"></div>
+            <div class="evolution-indicator" v-if="filament.evolution > 0" :class="`evolution-${filament.evolution}`">
+              {{ ['', 'E', 'A', 'T'][filament.evolution] }}
+            </div>
+            
+            <!-- Synergy Connection Lines -->
+            <div 
+              v-if="filament.owned.gt(0) && showSynergyConnections" 
+              class="synergy-connections"
+            >
+              <div 
+                v-for="target in getSynergyTargets(index)" 
+                :key="target"
+                class="synergy-line"
+                :style="getSynergyLineStyle(index, target)"
+              ></div>
+            </div>
+          </div>
+          
+          <!-- Hover Information Panel -->
+          <div 
+            v-if="hoveredFilament === index"
+            class="filament-info-panel"
+            :style="getInfoPanelPosition(index)"
+          >
+            <h4>{{ filament.name }}</h4>
+            <div class="info-row">
+              <span>Owned:</span>
+              <span>{{ format(filament.owned) }}</span>
+            </div>
+            <div class="info-row">
+              <span>Purchased:</span>
+              <span>{{ format(filament.purchased) }}</span>
+            </div>
+            <div class="info-row">
+              <span>Production:</span>
+              <span>{{ format(getFilamentProductionRate(index)) }}/s</span>
+            </div>
+            <div class="info-row" v-if="filament.milestone > 0">
+              <span>Milestones:</span>
+              <span>{{ filament.milestone }} (×{{ Math.pow(2, filament.milestone) }})</span>
+            </div>
           </div>
         </div>
       </div>
@@ -87,7 +145,7 @@ import { useVisualEffects } from '@/composables/useVisualEffects'
 const gameStore = useGameStore()
 const starEchoStore = useStarEchoStore()
 const pulsationStore = usePulsationStore()
-const { filaments, starburstCount, starlight } = storeToRefs(gameStore)
+const { filaments, starburstCount, starlight, totalStardustProduction } = storeToRefs(gameStore)
 const { unlocked: starEchoUnlocked } = storeToRefs(starEchoStore)
 const pulsationState = computed(() => (pulsationStore as any)?.currentState || 'stable')
 const { animate, createParticleBurst, shakeScreen } = useVisualEffects()
@@ -97,6 +155,12 @@ const particleSystem = ref<InstanceType<typeof ParticleSystem>>()
 const starMapRef = ref<HTMLElement>()
 const activePulsingIndex = ref<number>(-1)
 const pulsingInterval = ref<number>()
+const hoveredFilament = ref<number>(-1)
+
+// Enhanced features
+const showEnergyFlows = computed(() => starburstCount.value > 0)
+const showSynergyConnections = computed(() => starlight.value.amount.gte(1))
+const isNovaPreparation = computed(() => starlight.value.amount.gte(100))
 
 const visibleFilaments = computed(() => {
   return filaments.value.filter((_, index) => {
@@ -193,6 +257,7 @@ async function handleStarClick() {
 function handleFilamentHover(index: number, isHovering: boolean) {
   if (isHovering && visibleFilaments.value[index]?.owned.gt(0)) {
     activePulsingIndex.value = index
+    hoveredFilament.value = index
     
     // Create hover particles
     const filamentElements = document.querySelectorAll('.filament')
@@ -215,6 +280,102 @@ function handleFilamentHover(index: number, isHovering: boolean) {
     }
   } else {
     activePulsingIndex.value = -1
+    hoveredFilament.value = -1
+  }
+}
+
+// New enhanced functions
+function isFilamentLocked(index: number): boolean {
+  return index > gameStore.maxUnlockedTier
+}
+
+function getFilamentProductionRate(index: number): Decimal {
+  const filament = filaments.value[index]
+  if (!filament || filament.owned.eq(0)) return D(0)
+  
+  // Basic production calculation matching the display logic
+  let production = filament.baseProduction.mul(filament.owned)
+  const milestoneBonus = D(2).pow(Math.floor(filament.purchased.toNumber() / 10))
+  production = production.mul(milestoneBonus).mul(filament.purchased)
+  
+  return production
+}
+
+function getInfoPanelPosition(index: number) {
+  const radius = 150 + index * 40
+  const angle = (index * 45) % 360 // Spread around the circle
+  const x = Math.cos(angle * Math.PI / 180) * (radius + 80)
+  const y = Math.sin(angle * Math.PI / 180) * (radius + 80)
+  
+  return {
+    position: 'absolute',
+    left: `calc(50% + ${x}px)`,
+    top: `calc(50% + ${y}px)`,
+    transform: 'translate(-50%, -50%)'
+  }
+}
+
+const activeConnections = computed(() => {
+  const connections = []
+  const activeFilaments = filaments.value.filter((f, i) => f.owned.gt(0) && i <= gameStore.maxUnlockedTier)
+  
+  for (let i = 0; i < activeFilaments.length - 1; i++) {
+    if (activeFilaments[i].owned.gt(0) && activeFilaments[i + 1].owned.gt(0)) {
+      connections.push({
+        from: i,
+        to: i + 1,
+        strength: activeFilaments[i].owned.div(activeFilaments[i + 1].owned).toNumber()
+      })
+    }
+  }
+  
+  return connections
+})
+
+function getEnergyLineStyle(connection: any) {
+  const fromRadius = 150 + connection.from * 40
+  const toRadius = 150 + connection.to * 40
+  const opacity = Math.min(connection.strength * 0.3, 0.8)
+  
+  return {
+    position: 'absolute',
+    width: `${Math.abs(toRadius - fromRadius)}px`,
+    height: '2px',
+    background: `linear-gradient(90deg, var(--accent-blue), var(--accent-purple))`,
+    opacity: opacity,
+    left: `calc(50% + ${fromRadius}px)`,
+    top: '50%',
+    transformOrigin: 'left center',
+    animation: 'energyFlow 2s ease-in-out infinite'
+  }
+}
+
+function getSynergyTargets(index: number): number[] {
+  const targets = []
+  // Connect to adjacent tiers that are active
+  if (index > 0 && filaments.value[index - 1].owned.gt(0)) {
+    targets.push(index - 1)
+  }
+  if (index < filaments.value.length - 1 && filaments.value[index + 1].owned.gt(0)) {
+    targets.push(index + 1)
+  }
+  return targets
+}
+
+function getSynergyLineStyle(fromIndex: number, toIndex: number) {
+  const fromRadius = 150 + fromIndex * 40
+  const toRadius = 150 + toIndex * 40
+  const radiusDiff = toRadius - fromRadius
+  
+  return {
+    position: 'absolute',
+    width: `${Math.abs(radiusDiff) * 0.7}px`,
+    height: '1px',
+    background: 'var(--accent-green)',
+    opacity: 0.4,
+    left: fromIndex < toIndex ? '0' : `${Math.abs(radiusDiff) * 0.3}px`,
+    top: '50%',
+    animation: 'synergyPulse 3s ease-in-out infinite'
   }
 }
 
@@ -596,6 +757,244 @@ onUnmounted(() => {
   50% { filter: brightness(1.2); }
 }
 
+/* Enhanced Star Map Features */
+.production-display {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.star-aura {
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 160%;
+  height: 160%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: aura-pulse 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes aura-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.1); opacity: 0.6; }
+}
+
+.energy-flows {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.energy-line {
+  position: absolute;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  border-radius: 2px;
+  filter: blur(1px);
+  box-shadow: 0 0 10px currentColor;
+}
+
+@keyframes energyFlow {
+  0% { transform: scaleX(0); opacity: 0; }
+  50% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(0); opacity: 0; }
+}
+
+.filament-evolved {
+  position: relative;
+}
+
+.filament-evolved::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background: conic-gradient(from 0deg, var(--accent-purple), var(--accent-blue), var(--accent-green), var(--accent-purple));
+  border-radius: 50%;
+  animation: evolution-rotate 4s linear infinite;
+  opacity: 0.6;
+  z-index: -1;
+}
+
+@keyframes evolution-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.filament-locked {
+  opacity: 0.4;
+  filter: grayscale(80%);
+  cursor: not-allowed;
+}
+
+.filament-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 12px;
+  background: rgba(255, 69, 0, 0.9);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.evolution-indicator {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-purple);
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 800;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  box-shadow: 0 0 6px var(--accent-purple);
+}
+
+.evolution-indicator.evolution-1 { background: var(--accent-green); }
+.evolution-indicator.evolution-2 { background: var(--accent-blue); }
+.evolution-indicator.evolution-3 { background: var(--accent-purple); }
+
+.filament-purchased {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: var(--accent-green);
+  color: white;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 6px;
+  min-width: 12px;
+  text-align: center;
+  z-index: 2;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.synergy-connections {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.synergy-line {
+  background: var(--accent-green);
+  border-radius: 1px;
+  filter: blur(0.5px);
+  box-shadow: 0 0 6px currentColor;
+}
+
+@keyframes synergyPulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(1); }
+  50% { opacity: 0.8; transform: scaleY(1.2); }
+}
+
+.filament-info-panel {
+  background: rgba(22, 33, 62, 0.95);
+  border: 1px solid var(--accent-blue);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 200px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.filament-info-panel h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.filament-info-panel .info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.filament-info-panel .info-row span:first-child {
+  color: var(--text-muted);
+}
+
+.filament-info-panel .info-row span:last-child {
+  color: var(--text-primary);
+  font-family: 'Roboto Mono', monospace;
+}
+
+.central-star.nova-preparation {
+  background: radial-gradient(circle, #ff6b35 0%, #ffd700 50%, #ff8c00 100%);
+  box-shadow: 
+    0 0 100px #ffd700,
+    0 0 200px #ff8c00,
+    0 0 300px rgba(255, 107, 53, 0.8);
+  animation: nova-preparation 3s ease-in-out infinite;
+}
+
+@keyframes nova-preparation {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1.2);
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.15);
+    filter: brightness(1.5);
+  }
+}
+
+.central-star.nova-preparation .star-core {
+  background: radial-gradient(circle, #ffffff 0%, #ffd700 50%, #ff6b35 100%);
+  animation: nova-core 2s ease-in-out infinite;
+}
+
+@keyframes nova-core {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+}
+
+.central-star.nova-preparation .star-flare {
+  background: conic-gradient(from 0deg, #ff6b35, #ffd700, #ff8c00, #ff6b35);
+  animation: nova-flare 1s linear infinite;
+}
+
+@keyframes nova-flare {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
   .star-map {
     width: 400px;
@@ -608,6 +1007,11 @@ onUnmounted(() => {
     /* Ensure touch target compliance even on mobile */
     min-width: 48px;
     min-height: 48px;
+  }
+  
+  .production-display {
+    font-size: 8px;
+    padding: 1px 4px;
   }
   
   .filament {
@@ -627,6 +1031,31 @@ onUnmounted(() => {
   .filament-count {
     font-size: 11px !important;
     font-weight: 800;
+  }
+  
+  .filament-purchased {
+    font-size: 7px;
+    padding: 1px 2px;
+  }
+  
+  .evolution-indicator {
+    width: 12px;
+    height: 12px;
+    font-size: 6px;
+  }
+  
+  .filament-info-panel {
+    min-width: 160px;
+    padding: 8px;
+    font-size: 10px;
+  }
+  
+  .filament-info-panel h4 {
+    font-size: 12px;
+  }
+  
+  .filament-info-panel .info-row {
+    font-size: 10px;
   }
   
   /* Simplified animations for mobile */

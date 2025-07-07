@@ -727,11 +727,16 @@ export const useGameStore = defineStore('game', () => {
       filament.milestone = 0
       filament.evolution = 0
     })
+    
+    // Force reactivity update by triggering changes
+    stardust.value.production = stardust.value.production.add(0)
+    starlight.value.production = starlight.value.production.add(0)
   }
   
   function performStarburst() {
     if (!canStarburst.value) return
     
+    const oldStarburstCount = starburstCount.value
     starburstCount.value++
     
     // Generate Star Rail during Starburst if player can get Starlight
@@ -764,6 +769,9 @@ export const useGameStore = defineStore('game', () => {
         // milestone and evolution are retained
       })
     }
+    
+    // Force reactivity update by triggering a change
+    stardust.value.production = stardust.value.production.add(0)
     
     // Track achievements and statistics
     const achievementStore = getAchievementStore()

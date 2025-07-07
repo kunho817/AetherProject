@@ -420,13 +420,14 @@ function getFilamentTooltip(index: number): string {
 }
 
 .filament-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-secondary);
-  border-radius: 8px;
-  padding: 15px;
+  border-radius: 12px;
+  padding: 20px;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .filament-card:hover:not(.disabled) {
@@ -484,15 +485,20 @@ function getFilamentTooltip(index: number): string {
 }
 
 .filament-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-primary);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
 .filament-tier {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--accent-blue);
-  font-weight: 700;
+  font-weight: 800;
+  background: rgba(59, 130, 246, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-blue);
 }
 
 .filament-stats {
@@ -502,17 +508,24 @@ function getFilamentTooltip(index: number): string {
 .stat-row {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 4px;
+  font-size: 14px;
+  margin-bottom: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat-label {
   color: var(--text-muted);
+  font-weight: 600;
+  min-width: 80px;
 }
 
 .stat-value {
   color: var(--text-primary);
   font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+  text-align: right;
+  min-width: 100px;
 }
 
 .filament-actions {

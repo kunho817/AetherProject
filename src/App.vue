@@ -108,10 +108,15 @@
         </div>
         
         <!-- Side Panel -->
-        <div class="side-panel">
-          <div class="panel-section">
-            <h3 class="panel-title">Production Info</h3>
-            <ProductionInfo />
+        <div class="side-panel" @mouseenter="handleSidePanelHover(true)" @mouseleave="handleSidePanelHover(false)">
+          <div class="panel-section production-info-section" :class="{ 'expanded': showProductionInfo }">
+            <h3 class="panel-title clickable" @click="toggleProductionInfo">
+              Production Info
+              <span class="expand-icon" :class="{ 'rotated': showProductionInfo }">▼</span>
+            </h3>
+            <div class="production-info-container" :class="{ 'visible': showProductionInfo }">
+              <ProductionInfo />
+            </div>
           </div>
           
           <div class="panel-section">
@@ -239,6 +244,8 @@ try {
 const showSettings = ref(false)
 const showPerformanceMonitor = ref(false)
 const initError = ref<string | null>(null)
+const showProductionInfo = ref(false)
+const productionInfoHoverTimeout = ref<number | null>(null)
 
 // Define Glare Layer tabs with visibility conditions
 const glareTabs = computed(() => [
@@ -270,6 +277,29 @@ function handleLayerChange(layerId: string) {
 
 function handleTabChange(tabId: string) {
   console.log('Tab changed to:', tabId)
+}
+
+function toggleProductionInfo() {
+  showProductionInfo.value = !showProductionInfo.value
+}
+
+function handleSidePanelHover(isHovering: boolean) {
+  if (productionInfoHoverTimeout.value) {
+    clearTimeout(productionInfoHoverTimeout.value)
+    productionInfoHoverTimeout.value = null
+  }
+  
+  if (isHovering) {
+    // Show production info immediately on hover
+    productionInfoHoverTimeout.value = window.setTimeout(() => {
+      showProductionInfo.value = true
+    }, 300) // 300ms delay before showing
+  } else {
+    // Hide production info after delay when not hovering
+    productionInfoHoverTimeout.value = window.setTimeout(() => {
+      showProductionInfo.value = false
+    }, 1000) // 1s delay before hiding
+  }
 }
 
 function performStarburst() {
@@ -384,6 +414,54 @@ onMounted(() => {
   margin-bottom: 15px;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.panel-title.clickable {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: color 0.3s ease;
+  user-select: none;
+}
+
+.panel-title.clickable:hover {
+  color: var(--accent-blue);
+}
+
+.expand-icon {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+  opacity: 0.7;
+}
+
+.expand-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.production-info-section {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+.production-info-container {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+
+.production-info-container.visible {
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.production-info-section.expanded {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
 }
 
 .quick-actions {
