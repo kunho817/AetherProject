@@ -42,7 +42,7 @@
     
     
     <div class="constellation-container" ref="constellationContainer">
-      <div class="constellation-tabs camera-content" :style="{ transform: transform }">
+      <div class="constellation-tabs" :style="{ transform: transform }">
         <button 
           v-for="constellation in availableConstellations"
         :key="constellation.id"
@@ -423,23 +423,96 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRailRoadStore } from '@/stores/railroad'
 import { format } from '@/utils/formatting'
 import type { ConstellationType, RailStation, ConstellationGroup, IntersectionType } from '@/types/railroad'
-import { useCameraControls } from '@/composables/useCameraControls'
 
 const railRoadStore = useRailRoadStore()
 
-// Camera controls (no UI buttons, just mouse wheel zoom and drag pan)
+// Optimized camera controls
 const constellationContainer = ref<HTMLElement>()
-const { transform } = useCameraControls(constellationContainer, {
-  minZoom: 1.0,   // 100% minimum
-  maxZoom: 2.5,   // 250% maximum  
-  zoomSpeed: 0.1,
-  defaultZoom: 2.5  // Start at 250% as requested
+const zoom = ref(2.5) // Start at 250%
+const panX = ref(0)
+const panY = ref(0)
+const isDragging = ref(false)
+
+let lastMouseX = 0
+let lastMouseY = 0
+let animationFrame = 0
+
+const transform = computed(() => {
+  return `translate(${panX.value}px, ${panY.value}px) scale(${zoom.value})`
 })
+
+// Throttled mouse wheel handler
+const handleWheel = (e: WheelEvent) => {
+  e.preventDefault()
+  
+  if (animationFrame) return // Skip if already animating
+  
+  animationFrame = requestAnimationFrame(() => {
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    zoom.value = Math.max(2.0, Math.min(3.5, zoom.value + delta))
+    animationFrame = 0
+  })
+}
+
+// Efficient drag handlers
+const handleMouseDown = (e: MouseEvent) => {
+  if (e.button !== 0) return
+  isDragging.value = true
+  lastMouseX = e.clientX
+  lastMouseY = e.clientY
+}
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (!isDragging.value) return
+  
+  if (animationFrame) return // Skip if already animating
+  
+  animationFrame = requestAnimationFrame(() => {
+    const deltaX = e.clientX - lastMouseX
+    const deltaY = e.clientY - lastMouseY
+    
+    panX.value += deltaX
+    panY.value += deltaY
+    
+    lastMouseX = e.clientX
+    lastMouseY = e.clientY
+    animationFrame = 0
+  })
+}
+
+const handleMouseUp = () => {
+  isDragging.value = false
+}
+
+onMounted(() => {
+  if (!constellationContainer.value) return
+  
+  const container = constellationContainer.value
+  container.addEventListener('wheel', handleWheel, { passive: false })
+  container.addEventListener('mousedown', handleMouseDown)
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+})
+
+onUnmounted(() => {
+  if (!constellationContainer.value) return
+  
+  const container = constellationContainer.value
+  container.removeEventListener('wheel', handleWheel)
+  container.removeEventListener('mousedown', handleMouseDown)
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', handleMouseUp)
+  
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame)
+  }
+})
+
 
 
 const {
@@ -1281,11 +1354,11 @@ if (availableConstellations.value.length > 0 && !selectedConstellation.value) {
   }
 }
 
-/* Constellation container camera controls */
 .constellation-container {
   position: relative;
   overflow: hidden;
   cursor: grab;
+  user-select: none;
 }
 
 .constellation-container:active {
@@ -1293,8 +1366,8 @@ if (availableConstellations.value.length > 0 && !selectedConstellation.value) {
 }
 
 .constellation-tabs {
-  transition: transform 0.1s ease-out;
   transform-origin: center center;
+  will-change: transform;
 }
 
 </style>

@@ -4,19 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Reference
 
-- **Project**: Aether - An incremental game (10 layers, currently implementing Glare Layer)
-- **Status**: Design phase complete, ready for implementation
-- **Stack**: Vue.js 3 + TypeScript + Pinia + break_eternity.js
-- **Development**: Multiple Claude CLI instances working on features in parallel
-- **Key Rule**: Complete and test each feature before moving to the next
+- **Project**: Aether - A fully-featured incremental game with Glare Layer complete
+- **Status**: Glare Layer fully implemented and functional
+- **Stack**: Vue.js 3 + TypeScript + Pinia + break_infinity.js (switched from break_eternity.js)
+- **Architecture**: Component-based with comprehensive state management
+- **Key Rule**: Test changes thoroughly before committing - complex interconnected systems
 
 ## Project Overview
 
-Aether Project is an incremental game with complex mechanics and strategic depth, designed for players who enjoy intricate game systems. The game consists of 10 layers, with the first layer (Glare Layer) being the primary focus of current development.
+Aether is a complex incremental game with strategic depth. The Glare Layer (first of 10 layers) is fully implemented with all major systems operational including resource production, reset mechanics, cosmic filaments, constellation navigation, and advanced features like Star Memory, Automation, and Special Events.
 
 ## Project Status
 
-**Current State**: Design documentation only - no implementation exists yet.
+**Current State**: Glare Layer fully implemented with comprehensive game systems.
 
 **Available Files**:
 - `Aether_Project_Concept.md` - High-level overview of all 10 game layers
@@ -114,107 +114,89 @@ Provides complete CSS implementation including:
 
 ## Development Commands
 
-### Initial Project Setup (First Claude Instance)
-
-```bash
-# Create Vue.js project with TypeScript, Pinia, and Vitest
-npm create vue@latest . -- --typescript --jsx --pinia --vitest --eslint --prettier
-
-# Install additional dependencies
-npm install break-eternity
-npm install -D @types/node
-
-# Copy existing assets
-cp break_eternity.js src/utils/
-```
-
-### Development Commands (Once Project Exists)
-
 ```bash
 # Start development server
 npm run dev
 
-# Build for production
+# Build for production  
 npm run build
 npm run preview
 
-# Code quality
+# Type checking
 npm run type-check
-npm run lint
-npm run format
 
-# Testing
-npm run test:unit
-npm run test:unit -- --coverage
+# Note: Linting and formatting are not configured
+# npm run lint outputs "No linting configured"
+# npm run format outputs "No formatting configured"
 ```
 
-### Claude CLI Commands for Parallel Development
+## Implemented Architecture
 
-```bash
-# Start new Claude instance for specific feature
-claude "Implement the Resource System for Aether according to CLAUDE.md"
+### Core Store Structure (Pinia)
+- **gameState.ts** - Central game state, resources, filaments, reset logic
+- **gameLoop.ts** - Main game loop and time management
+- **achievements.ts** - Achievement tracking and unlocks
+- **automation.ts** - Automated purchasing and progression
+- **condensation.ts** - Advanced resource condensation mechanics
+- **evolution.ts** - Filament evolution system (3 stages per tier)
+- **memory.ts** - Star Memory preservation across resets
+- **nebula.ts** - Grid-based placement system with pattern bonuses
+- **pulsation.ts** - Star Pulsation 5-cycle system
+- **railroad.ts** - Constellation navigation with 12 constellation types
+- **starecho.ts** - Star Echo advanced system
+- **upgrades.ts** - Upgrade tree with 4 branches
+- **events.ts** - Special Events system
+- **tooltips.ts** - Dynamic tooltip system
 
-# Continue existing session
-claude -c
-
-# Resume specific session by ID
-claude -r "<session-id>"
-
-# Non-interactive mode for automated tasks
-claude -p "Run all unit tests and report results"
-
-# With specific permissions for development
-claude --allowedTools "Bash(npm:*)" "Bash(git:*)" "Read" "Edit" "Write"
+### Component Organization
+```
+components/
+├── effects/        # Particle effects and animations
+├── game/          # Core game mechanics UI
+├── layout/        # App structure and layout
+├── system/        # Error handling and settings
+└── ui/           # Reusable UI components
 ```
 
-### Testing Commands
+### Key Files for Maintenance
+- **src/utils/decimal.ts** - Wrapper for break_infinity.js number handling
+- **src/utils/formatting.ts** - Number display formatting
+- **src/types/game.ts** - Core type definitions
+- **src/composables/** - Vue composition functions for complex logic
 
-```bash
-# Run all tests
-npm run test
+## Development Guidelines
 
-# Run specific test file
-npm run test src/stores/__tests__/resources.test.ts
+### Working with Existing Systems
 
-# Run tests in watch mode
-npm run test:watch
+1. **State Management**
+   - All stores are interconnected - changes in one may affect others
+   - The gameState store is central - most other stores depend on it
+   - Use try-catch patterns when accessing other stores (see gameState.ts examples)
+   - Always test store interactions after modifications
 
-# Coverage report
-npm run test:coverage
-```
+2. **Number Handling**
+   - Use `D()` function from `@/utils/decimal` for all Decimal operations
+   - Import `ZERO`, `ONE` constants for common values
+   - Numbers are displayed using `@/utils/formatting`
+   - Never use native JavaScript numbers for game calculations
 
-## Implementation Guidelines
+3. **Component Development**
+   - Follow established naming patterns in components/
+   - Use composition API with Pinia stores
+   - Implement error boundaries for complex components
+   - Consider mobile responsiveness (styles/mobile.css exists)
 
-When implementing the game:
-
-1. **State Management Structure**
-   - Create separate Pinia stores for each major system (resources, filaments, nebula, etc.)
-   - Use computed properties for derived values (production rates, multipliers)
-   - Implement save/load functionality early
-
-2. **Component Architecture**
-   - `StarMap.vue` - Main game view with central star
-   - `FilamentOrbit.vue` - Circular filament display
-   - `NebulaGrid.vue` - Grid-based placement system
-   - `RailRoadNetwork.vue` - Constellation navigation
-   - `ResourceHeader.vue` - Resource display panel
-
-3. **Number Handling**
-   - Use Decimal from break_eternity.js for all game values
-   - Implement proper number formatting (scientific notation)
-   - Handle exponential growth properly (up to 1e10000+)
-
-4. **Performance Considerations**
-   - Implement efficient game loop (requestAnimationFrame)
-   - Batch DOM updates
-   - Use Vue's reactive system efficiently
-   - Consider web workers for heavy calculations
+4. **Performance**
+   - Game loop runs at 60 FPS via requestAnimationFrame
+   - Avoid heavy computations in reactive watchers
+   - Use computed properties for derived values
+   - Large calculations are already optimized in stores
 
 5. **Save System**
-   - Implement auto-save every 30 seconds
-   - Use localStorage for persistence
-   - Include save versioning for future updates
-   - Compress save data
+   - Auto-save implemented - don't duplicate
+   - Save data includes all store states
+   - Version compatibility handled in load() functions
+   - Use base64 encoding for save strings
 
 ## Critical Game Values
 
@@ -240,71 +222,49 @@ When implementing the game:
 | 9    | 1e31      | 2.3         | 1.9x            |
 | 10   | 1e40      | 2.4         | 2.0x            |
 
-## Key Implementation Challenges
+## Common Maintenance Tasks
 
-1. **Complex Reset System**: Multiple reset types with different preservation rules
-2. **Synergy Calculations**: Many interconnected systems affecting each other
-3. **UI Complexity**: Displaying 10+ systems simultaneously without overwhelming players
-4. **Number Scale**: Handling numbers from 10 to 1e10000+
-5. **State Persistence**: Preserving complex game state across resets
+### Debugging Store Issues
+1. Check browser console for store access errors
+2. Verify store initialization order in main.ts
+3. Use Vue DevTools to inspect Pinia store states
+4. Look for circular dependencies between stores
 
-## Testing Approach
+### Adding New Features
+1. Create appropriate TypeScript types in types/
+2. Add store logic following existing patterns
+3. Implement UI components with error boundaries
+4. Test save/load compatibility
+5. Update this CLAUDE.md if significant
 
-When implementation begins:
-- Unit tests for game calculations
-- Integration tests for system interactions
-- Save/load integrity tests
-- Performance benchmarks for game loop
-- Manual playtesting for game balance
+### Performance Issues
+1. Check game loop performance in browser DevTools
+2. Look for reactive watchers causing excessive recalculation
+3. Verify Decimal operations aren't using native numbers
+4. Check for memory leaks in long-running sessions
 
-## Development Workflow
+### Balance Changes
+1. Modify base values in gameState.ts filamentData array
+2. Update formulas in computed properties and functions
+3. Test progression from fresh game to late-game
+4. Verify reset mechanics still work correctly
 
-### Parallel Claude CLI Strategy
+## Key Implementation Details
 
-The Aether Project implementation will use multiple Claude Code instances working in parallel:
+### Reset System Architecture
+- **Starburst**: Resets filaments and stardust, keeps evolution and starlight
+- **Starlight Reset**: Resets everything except Star Memory preserved items
+- Star Memory system can preserve specific items across resets
+- Dimensional Anchor upgrade skips every 3rd Starburst reset
 
-1. **Feature Decomposition**: Break down the Glare Layer into independent, testable features
-2. **Parallel Development**: Each Claude instance focuses on one specific feature
-3. **Incremental Integration**: Complete and test each feature before moving to the next
-4. **Test-Driven Progress**: Each feature must be tested and confirmed working before proceeding
+### Number System
+- Uses break_infinity.js instead of break_eternity.js
+- All game values stored as Decimal objects
+- Supports numbers up to approximately 1e1000 (not 1e10000+ as originally planned)
+- Formatting handles scientific notation and suffixes
 
-### Implementation Order (Glare Layer)
-
-Each feature should be implemented by a separate Claude instance in this order:
-
-1. **Project Initialization** (Claude Instance #1)
-   ```bash
-   claude "Initialize the Aether Vue.js project according to CLAUDE.md specifications"
-   ```
-
-2. **Core Systems** (Claude Instance #2)
-   ```bash
-   claude "Implement Stardust resource and basic game loop for Aether"
-   ```
-
-3. **Cosmic Filaments** (Claude Instance #3)
-   ```bash
-   claude "Implement the 10-tier Cosmic Filaments system with formulas from design doc"
-   ```
-
-4. **Reset Systems** (Claude Instance #4)
-   ```bash
-   claude "Implement Starburst and Starlight reset mechanics"
-   ```
-
-5. **Advanced Features** (Claude Instances #5-10)
-   - Nebula Grid System
-   - Star Pulsation System
-   - Rail Road System
-   - Star Memory System
-   - Upgrade Tree System
-   - UI Polish and Integration
-
-### Testing Protocol
-
-Each feature must pass these tests before proceeding:
-- Unit tests for core calculations
-- Integration test with existing features
-- Manual gameplay test for user experience
-- Performance test (maintain 60 FPS)
-- Save/load compatibility test
+### Store Dependencies
+- gameState is the root store - most systems depend on it
+- Stores safely access each other using try-catch patterns
+- Failed store access returns null, allowing graceful degradation
+- Save/load system handles all stores automatically

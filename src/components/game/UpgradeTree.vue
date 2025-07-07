@@ -36,7 +36,7 @@
     
     
     <div class="upgrade-tree-container" ref="treeContainer">
-      <div class="tree-visualization camera-content" :style="{ transform: transform }">
+      <div class="tree-visualization" :style="{ transform: transform }">
         <svg class="tree-svg" viewBox="-600 -600 1200 1200">
           <!-- Connection lines -->
           <g class="connections">
@@ -72,7 +72,7 @@
               @click="handleUpgradeClick(upgrade)"
             >
               <circle 
-                r="25"
+                r="37.5"
                 :class="['upgrade-circle', `tier-${upgrade.tier}`]"
               />
               <text 
@@ -91,7 +91,7 @@
               v-for="upgrade in branchUpgrades"
               :key="`label-${upgrade.id}`"
               :x="upgrade.position.x"
-              :y="upgrade.position.y + 45"
+              :y="upgrade.position.y + 67.5"
               class="upgrade-name"
               text-anchor="middle"
             >
@@ -204,26 +204,99 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUpgradeStore } from '@/stores/upgrades'
 import { useGameStore } from '@/stores/gameState'
 import { format } from '@/utils/formatting'
 import type { Upgrade, UpgradeBranch } from '@/types/upgrades'
 import { UpgradeBranch as UB } from '@/types/upgrades'
-import { useCameraControls } from '@/composables/useCameraControls'
 
 const upgradeStore = useUpgradeStore()
 const gameStore = useGameStore()
 
-// Camera controls (no UI buttons, just mouse wheel zoom and drag pan)
+// Optimized camera controls
 const treeContainer = ref<HTMLElement>()
-const { transform } = useCameraControls(treeContainer, {
-  minZoom: 1.0,   // 100% minimum
-  maxZoom: 2.5,   // 250% maximum  
-  zoomSpeed: 0.1,
-  defaultZoom: 2.5  // Start at 250% as requested
+const zoom = ref(2.5) // Start at 250%
+const panX = ref(0)
+const panY = ref(0)
+const isDragging = ref(false)
+
+let lastMouseX = 0
+let lastMouseY = 0
+let animationFrame = 0
+
+const transform = computed(() => {
+  return `translate(${panX.value}px, ${panY.value}px) scale(${zoom.value})`
 })
+
+// Throttled mouse wheel handler
+const handleWheel = (e: WheelEvent) => {
+  e.preventDefault()
+  
+  if (animationFrame) return // Skip if already animating
+  
+  animationFrame = requestAnimationFrame(() => {
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    zoom.value = Math.max(2.0, Math.min(3.5, zoom.value + delta))
+    animationFrame = 0
+  })
+}
+
+// Efficient drag handlers
+const handleMouseDown = (e: MouseEvent) => {
+  if (e.button !== 0) return
+  isDragging.value = true
+  lastMouseX = e.clientX
+  lastMouseY = e.clientY
+}
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (!isDragging.value) return
+  
+  if (animationFrame) return // Skip if already animating
+  
+  animationFrame = requestAnimationFrame(() => {
+    const deltaX = e.clientX - lastMouseX
+    const deltaY = e.clientY - lastMouseY
+    
+    panX.value += deltaX
+    panY.value += deltaY
+    
+    lastMouseX = e.clientX
+    lastMouseY = e.clientY
+    animationFrame = 0
+  })
+}
+
+const handleMouseUp = () => {
+  isDragging.value = false
+}
+
+onMounted(() => {
+  if (!treeContainer.value) return
+  
+  const container = treeContainer.value
+  container.addEventListener('wheel', handleWheel, { passive: false })
+  container.addEventListener('mousedown', handleMouseDown)
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+})
+
+onUnmounted(() => {
+  if (!treeContainer.value) return
+  
+  const container = treeContainer.value
+  container.removeEventListener('wheel', handleWheel)
+  container.removeEventListener('mousedown', handleMouseDown)
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', handleMouseUp)
+  
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame)
+  }
+})
+
 
 
 const {
@@ -374,6 +447,7 @@ if (upgradeData.value.has('star_core')) {
   position: relative;
   overflow: hidden;
   cursor: grab;
+  user-select: none;
 }
 
 .upgrade-tree-container:active {
@@ -381,8 +455,8 @@ if (upgradeData.value.has('star_core')) {
 }
 
 .tree-visualization {
-  transition: transform 0.1s ease-out;
   transform-origin: center center;
+  will-change: transform;
 }
 
 .tree-svg {
@@ -464,14 +538,14 @@ if (upgradeData.value.has('star_core')) {
 .upgrade-circle.tier-4 { stroke-width: 4; }
 
 .upgrade-tier-text {
-  font-size: 12px;
+  font-size: 18px;
   fill: var(--text-primary);
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
 }
 
 .upgrade-name {
-  font-size: 10px;
+  font-size: 15px;
   fill: var(--text-secondary);
   font-family: 'Roboto Mono', monospace;
 }
