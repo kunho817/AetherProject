@@ -40,9 +40,11 @@
       </div>
     </div>
     
-    <div class="constellation-tabs">
-      <button 
-        v-for="constellation in availableConstellations"
+    
+    <div class="constellation-container" ref="constellationContainer">
+      <div class="constellation-tabs camera-content" :style="{ transform: transform }">
+        <button 
+          v-for="constellation in availableConstellations"
         :key="constellation.id"
         :class="['constellation-tab', { 
           active: selectedConstellation === constellation.id,
@@ -69,7 +71,8 @@
           <span v-else-if="discoveryMode && canDiscoverConstellation(constellation.id)" class="status-discoverable">◆</span>
           <span v-else class="status-locked">✕</span>
         </div>
-      </button>
+        </button>
+      </div>
     </div>
     
     <div v-if="selectedConstellationData || (discoveryMode && selectedConstellation)" class="constellation-detail">
@@ -425,8 +428,19 @@ import { storeToRefs } from 'pinia'
 import { useRailRoadStore } from '@/stores/railroad'
 import { format } from '@/utils/formatting'
 import type { ConstellationType, RailStation, ConstellationGroup, IntersectionType } from '@/types/railroad'
+import { useCameraControls } from '@/composables/useCameraControls'
 
 const railRoadStore = useRailRoadStore()
+
+// Camera controls (no UI buttons, just mouse wheel zoom and drag pan)
+const constellationContainer = ref<HTMLElement>()
+const { transform } = useCameraControls(constellationContainer, {
+  minZoom: 1.0,   // 100% minimum
+  maxZoom: 2.5,   // 250% maximum  
+  zoomSpeed: 0.1,
+  defaultZoom: 2.5  // Start at 250% as requested
+})
+
 
 const {
   cosmicFragments,
@@ -1265,4 +1279,22 @@ if (availableConstellations.value.length > 0 && !selectedConstellation.value) {
   .intersection-info {
     grid-template-columns: 1fr;
   }
-}</style>
+}
+
+/* Constellation container camera controls */
+.constellation-container {
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.constellation-container:active {
+  cursor: grabbing;
+}
+
+.constellation-tabs {
+  transition: transform 0.1s ease-out;
+  transform-origin: center center;
+}
+
+</style>

@@ -31,11 +31,11 @@
         <div class="filament-stats">
           <div class="stat-row">
             <span class="stat-label">Purchased:</span>
-            <span class="stat-value purchased-highlight">{{ Math.floor(filament.purchased.toNumber()) }}</span>
+            <span class="stat-value purchased-highlight">{{ formatFilamentCount(filament.purchased) }}</span>
           </div>
           <div class="stat-row">
             <span class="stat-label">Total:</span>
-            <span class="stat-value">{{ Math.floor(filament.owned.toNumber()) }}</span>
+            <span class="stat-value">{{ formatFilamentCount(filament.owned) }}</span>
           </div>
           <div class="stat-row">
             <span class="stat-label">Production:</span>
@@ -115,7 +115,7 @@ import { ref, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/gameState'
 import { useAchievementStore } from '@/stores/achievements'
-import { format } from '@/utils/formatting'
+import { format, formatFilamentCount } from '@/utils/formatting'
 import { D, type Decimal } from '@/utils/decimal'
 import Tooltip from '@/components/ui/Tooltip.vue'
 import EnhancedButton from '@/components/ui/EnhancedButton.vue'
@@ -542,9 +542,10 @@ function getFilamentTooltip(index: number): string {
 
 .progress-bar {
   width: 100%;
-  height: 8px;
+  height: 20px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
   overflow: hidden;
   margin-top: 8px;
   position: relative;
@@ -638,12 +639,13 @@ function getFilamentTooltip(index: number): string {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-primary);
-  font-weight: 600;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 1), 0 0 3px rgba(0, 0, 0, 0.8);
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
+  white-space: nowrap;
 }
 
 /* Evolution progress styling */

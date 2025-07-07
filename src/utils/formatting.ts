@@ -11,7 +11,22 @@ export function format(value: DecimalSource, precision = 2): string {
     return decimal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   }
   
-  return decimal.toExponential(precision)
+  // Custom exponential formatting to remove the + sign
+  const exp = decimal.toExponential(precision)
+  return exp.replace('e+', 'e')
+}
+
+// Special formatting for filament counts - 4-digit limit
+export function formatFilamentCount(value: DecimalSource): string {
+  const decimal = new Decimal(value)
+  
+  if (decimal.lt(10000)) {
+    return decimal.toFixed(0)
+  }
+  
+  // For values >= 10000, use exponential notation
+  const exp = decimal.toExponential(0)
+  return exp.replace('e+', 'e')
 }
 
 export function formatTime(seconds: number): string {

@@ -58,8 +58,8 @@
             @mouseenter="handleFilamentHover(index, true)"
             @mouseleave="handleFilamentHover(index, false)"
           >
-            <span class="filament-count">{{ Math.floor(filament.owned.toNumber()) }}</span>
-            <span class="filament-purchased" v-if="filament.purchased.gt(0)">{{ Math.floor(filament.purchased.toNumber()) }}</span>
+            <span class="filament-count">{{ formatFilamentCount(filament.owned) }}</span>
+            <span class="filament-purchased" v-if="filament.purchased.gt(0)">{{ formatFilamentCount(filament.purchased) }}</span>
             <div class="filament-glow" v-if="filament.owned.gt(0)"></div>
             <div class="evolution-indicator" v-if="filament.evolution > 0" :class="`evolution-${filament.evolution}`">
               {{ ['', 'E', 'A', 'T'][filament.evolution] }}
@@ -88,11 +88,11 @@
             <h4>{{ filament.name }}</h4>
             <div class="info-row">
               <span>Owned:</span>
-              <span>{{ format(filament.owned) }}</span>
+              <span>{{ formatFilamentCount(filament.owned) }}</span>
             </div>
             <div class="info-row">
               <span>Purchased:</span>
-              <span>{{ format(filament.purchased) }}</span>
+              <span>{{ formatFilamentCount(filament.purchased) }}</span>
             </div>
             <div class="info-row">
               <span>Production:</span>
@@ -136,7 +136,7 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/gameState'
 import { useStarEchoStore } from '@/stores/starecho'
 import { usePulsationStore } from '@/stores/pulsation'
-import { format } from '@/utils/formatting'
+import { format, formatFilamentCount } from '@/utils/formatting'
 import { D } from '@/utils/decimal'
 import StarEcho from '@/components/game/StarEcho.vue'
 import ParticleSystem from '@/components/effects/ParticleSystem.vue'

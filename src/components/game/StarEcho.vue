@@ -367,8 +367,10 @@ const getFilamentName = starEchoStore.getFilamentName
   transition: all 0.3s ease;
 }
 
-.echo-slot:hover {
-  transform: scale(1.1);
+.echo-slot:hover:not(.occupied) {
+  /* Remove transform scale to prevent movement */
+  /* transform: scale(1.1); */
+  filter: brightness(1.3);
 }
 
 .slot-circle {

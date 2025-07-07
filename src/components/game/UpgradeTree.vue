@@ -34,8 +34,9 @@
       </button>
     </div>
     
-    <div class="upgrade-tree-container">
-      <div class="tree-visualization">
+    
+    <div class="upgrade-tree-container" ref="treeContainer">
+      <div class="tree-visualization camera-content" :style="{ transform: transform }">
         <svg class="tree-svg" viewBox="-600 -600 1200 1200">
           <!-- Connection lines -->
           <g class="connections">
@@ -210,9 +211,20 @@ import { useGameStore } from '@/stores/gameState'
 import { format } from '@/utils/formatting'
 import type { Upgrade, UpgradeBranch } from '@/types/upgrades'
 import { UpgradeBranch as UB } from '@/types/upgrades'
+import { useCameraControls } from '@/composables/useCameraControls'
 
 const upgradeStore = useUpgradeStore()
 const gameStore = useGameStore()
+
+// Camera controls (no UI buttons, just mouse wheel zoom and drag pan)
+const treeContainer = ref<HTMLElement>()
+const { transform } = useCameraControls(treeContainer, {
+  minZoom: 1.0,   // 100% minimum
+  maxZoom: 2.5,   // 250% maximum  
+  zoomSpeed: 0.1,
+  defaultZoom: 2.5  // Start at 250% as requested
+})
+
 
 const {
   unlocked,
@@ -359,6 +371,18 @@ if (upgradeData.value.has('star_core')) {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.upgrade-tree-container:active {
+  cursor: grabbing;
+}
+
+.tree-visualization {
+  transition: transform 0.1s ease-out;
+  transform-origin: center center;
 }
 
 .tree-svg {
@@ -389,8 +413,10 @@ if (upgradeData.value.has('star_core')) {
   transition: all 0.3s ease;
 }
 
-.upgrade-node:hover {
-  transform: scale(1.1);
+.upgrade-node:hover:not(.locked) {
+  /* Remove transform scale to prevent movement */
+  /* transform: scale(1.1); */
+  filter: brightness(1.2);
 }
 
 .upgrade-circle {
@@ -409,6 +435,12 @@ if (upgradeData.value.has('star_core')) {
   fill: rgba(0, 180, 216, 0.3);
   stroke: var(--accent-blue);
   stroke-width: 3;
+}
+
+.upgrade-node.available:hover .upgrade-circle {
+  fill: rgba(0, 180, 216, 0.5);
+  stroke-width: 4;
+  box-shadow: 0 0 20px var(--accent-blue);
 }
 
 .upgrade-node.purchased .upgrade-circle {
@@ -600,4 +632,16 @@ if (upgradeData.value.has('star_core')) {
     flex-direction: column;
     gap: 10px;
   }
-}</style>
+}
+
+
+.tree-visualization {
+  transition: transform 0.1s ease-out;
+  transform-origin: center center;
+}
+
+/* Hide overflow on SVG to prevent issues */
+.tree-svg {
+  overflow: visible;
+}
+</style>

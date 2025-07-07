@@ -728,6 +728,11 @@ export const useGameStore = defineStore('game', () => {
       filament.evolution = 0
     })
     
+    // Reset Nebula Store essence to match gameState
+    if (nebulaStore) {
+      nebulaStore.nebularEssence = 0
+    }
+    
     // Force reactivity update by triggering changes
     stardust.value.production = stardust.value.production.add(0)
     starlight.value.production = starlight.value.production.add(0)
@@ -762,12 +767,19 @@ export const useGameStore = defineStore('game', () => {
       // Perform normal reset
       stardust.value.amount = ZERO
       
-      // Reset filaments but keep milestone progress (according to concept)
+      // Reset filaments - milestones should reflect new purchased count (0)
       filaments.value.forEach(filament => {
         filament.purchased = ZERO
         filament.owned = ZERO
-        // milestone and evolution are retained
+        filament.milestone = 0  // Reset milestone since purchased = 0
+        // evolution is retained per design
       })
+      
+      // Reset Nebula Store essence to match gameState reset
+      const nebulaStore = getNebulaStore()
+      if (nebulaStore) {
+        nebulaStore.nebularEssence = 0
+      }
     }
     
     // Force reactivity update by triggering a change
