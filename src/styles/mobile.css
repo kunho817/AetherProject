@@ -1,0 +1,472 @@
+/* ===== MOBILE OPTIMIZATION STYLES ===== */
+
+/* Base mobile styles */
+@media (max-width: 768px) {
+  /* Disable expensive effects on mobile */
+  .mobile-device .particle-container,
+  .mobile-device .background-effects,
+  .mobile-device .energy-lines,
+  .mobile-device .cosmic-dust {
+    display: none !important;
+  }
+
+  /* Simplify shadows and gradients */
+  .mobile-device .central-star {
+    box-shadow: 0 0 30px var(--accent-yellow) !important;
+    background: var(--accent-orange) !important;
+  }
+
+  .mobile-device .filament {
+    box-shadow: none !important;
+    background: var(--accent-blue) !important;
+  }
+
+  /* Reduce animation complexity */
+  .mobile-device .enhanced-btn .btn-shine,
+  .mobile-device .btn-ripple {
+    display: none;
+  }
+
+  /* Simplify progress bars */
+  .mobile-device .progress-fill::after {
+    display: none;
+  }
+
+  /* Touch-friendly sizing */
+  .mobile-device .btn,
+  .mobile-device .enhanced-btn {
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .mobile-device .tab-button {
+    min-height: 48px;
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+
+  /* Simplified grid layouts */
+  .mobile-device .filament-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .mobile-device .resources-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
+  }
+
+  .mobile-device .info-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Star map mobile optimization */
+  .mobile-device .star-map {
+    width: 100% !important;
+    height: 300px !important;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .mobile-device .central-star {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .mobile-device .filament {
+    width: 24px !important;
+    height: 24px !important;
+    top: -12px !important;
+  }
+
+  .mobile-device .filament-count {
+    font-size: 10px !important;
+  }
+
+  /* Simplified tooltip positioning */
+  .mobile-device .tooltip-content {
+    position: fixed !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+    max-width: none !important;
+  }
+}
+
+/* Low-end device optimizations */
+.low-end-device {
+  /* Disable animations on specific elements only */
+  .particle-container,
+  .background-effects,
+  .btn-shine,
+  .resource-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Simplify visual effects */
+  .central-star {
+    box-shadow: 0 0 20px var(--accent-orange) !important;
+  }
+
+  .filament {
+    box-shadow: none !important;
+  }
+}
+
+/* Performance-based optimizations */
+.performance-critical {
+  /* Emergency performance mode - target specific elements */
+  .particle-container,
+  .background-effects,
+  .btn-particles,
+  .resource-glow,
+  .btn-shine {
+    display: none !important;
+  }
+  
+  /* Reduce animations on specific elements */
+  .enhanced-btn,
+  .filament,
+  .central-star {
+    animation: none !important;
+    transition: opacity 0.1s ease !important;
+  }
+}
+
+.performance-low {
+  /* Reduced visual effects */
+  .particle-container {
+    display: none !important;
+  }
+
+  .background-effects {
+    opacity: 0.1 !important;
+  }
+
+  /* Target specific elements for reduced animations */
+  .enhanced-btn,
+  .tab-button,
+  .filament-card {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+}
+
+.performance-medium {
+  /* Some visual effects disabled */
+  .cosmic-dust,
+  .energy-lines {
+    display: none !important;
+  }
+
+  /* Moderate animation speed */
+  .enhanced-btn,
+  .tab-button,
+  .filament-card {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+}
+
+/* Particle system mobile optimizations */
+.no-particles .particle-container,
+.no-particles .btn-particles,
+.no-particles .resource-particles {
+  display: none !important;
+}
+
+/* Reduced motion optimizations */
+.reduced-animations {
+  .enhanced-btn,
+  .tab-button,
+  .filament-card,
+  .particle,
+  .star-pulse {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+}
+
+.reduced-effects .background-effects,
+.reduced-effects .particle-container,
+.reduced-effects .btn-shine,
+.reduced-effects .resource-glow {
+  display: none !important;
+}
+
+/* Screen size specific optimizations */
+.screen-small {
+  /* Very small screens (< 768px) */
+  .main-container {
+    padding: 10px !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .tab-header {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-button {
+    min-width: 100px;
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+
+  .tab-content {
+    padding: 15px !important;
+    max-height: 400px !important;
+    min-height: 400px !important;
+  }
+
+  .section-title {
+    font-size: 16px !important;
+    margin-bottom: 15px !important;
+  }
+}
+
+.screen-medium {
+  /* Medium screens (768px - 1200px) */
+  .main-container {
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .filament-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .star-map {
+    width: 500px !important;
+    height: 500px !important;
+  }
+}
+
+/* Touch-specific optimizations */
+.mobile-device {
+  /* Improve touch targets */
+  button,
+  .btn,
+  .enhanced-btn,
+  .filament,
+  .tab-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text selection on touch */
+  .filament,
+  .central-star,
+  .resource-display,
+  .tab-button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Improve scrolling */
+  .tab-content,
+  .sidebar {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Remove hover effects that don't work on touch */
+  .hover-lift:hover,
+  .hover-scale:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Better focus states for touch */
+  button:focus,
+  .btn:focus,
+  .enhanced-btn:focus {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-device .main-container {
+    grid-template-columns: 1fr 300px !important;
+  }
+
+  .mobile-device .tab-content {
+    max-height: 300px !important;
+    min-height: 300px !important;
+  }
+
+  .mobile-device .star-map {
+    height: 250px !important;
+  }
+}
+
+/* Tablet-specific optimizations */
+.tablet-device {
+  .filament-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .resources-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .tab-button {
+    min-width: 120px;
+  }
+
+  /* Tablet touch targets */
+  button,
+  .btn,
+  .enhanced-btn {
+    min-height: 44px;
+  }
+}
+
+/* High DPI / Retina display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .mobile-device .central-star,
+  .mobile-device .filament {
+    /* Use sharper, simpler graphics for high DPI */
+    background-image: none !important;
+    border: 1px solid currentColor;
+  }
+}
+
+/* Memory pressure optimizations */
+.memory-pressure-high {
+  /* Reduce DOM complexity */
+  .background-effects,
+  .particle-container,
+  .resource-glow,
+  .btn-shine {
+    display: none !important;
+  }
+}
+
+.memory-pressure-critical {
+  /* Emergency memory conservation */
+  * {
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  .enhanced-btn .btn-background {
+    display: none !important;
+  }
+}
+
+/* Connection-based optimizations */
+.slow-connection {
+  /* Reduce visual complexity for slow connections */
+  .background-effects {
+    display: none !important;
+  }
+
+  /* Disable auto-refresh effects */
+  .shimmer {
+    animation: none !important;
+  }
+}
+
+/* Battery saving mode */
+.battery-saver {
+  /* Minimal animations and effects */
+  * {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+
+  .particle-container,
+  .background-effects,
+  .resource-glow {
+    display: none !important;
+  }
+}
+
+/* iOS-specific fixes */
+.ios-device {
+  /* Fix iOS viewport issues */
+  .main-container {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Fix iOS scrolling */
+  .tab-content {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto; /* Smooth scrolling can be janky on iOS */
+  }
+
+  /* iOS safe area support */
+  .header {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Android-specific fixes */
+.android-device {
+  /* Fix Android input zoom */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Android Chrome address bar handling */
+  .main-container {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height */
+  }
+}
+
+/* Reduced data mode */
+.reduced-data {
+  /* Minimal visual effects to save data */
+  .background-effects,
+  .particle-container {
+    display: none !important;
+  }
+
+  /* Simpler gradients */
+  .btn,
+  .enhanced-btn {
+    background: var(--accent-blue) !important;
+  }
+}
+
+/* Accessibility enhancements for mobile */
+@media (max-width: 768px) {
+  /* Larger text for better readability */
+  .mobile-device {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .mobile-device .resource-value {
+    font-size: 18px !important;
+  }
+
+  .mobile-device .filament-name {
+    font-size: 16px !important;
+  }
+
+  /* Better contrast for mobile */
+  .mobile-device .text-muted {
+    color: #a0a0a0 !important;
+  }
+
+  /* Focus improvements */
+  .mobile-device *:focus {
+    outline: 3px solid var(--accent-blue) !important;
+    outline-offset: 2px !important;
+  }
+}

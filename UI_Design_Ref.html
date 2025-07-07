@@ -1,0 +1,2886 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether Project - Glare Layer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&family=Exo+2:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --accent-blue: #00b4d8;
+            --accent-purple: #7209b7;
+            --accent-green: #06ffa5;
+            --accent-orange: #ff6b35;
+            --accent-red: #ff073a;
+            --accent-yellow: #ffd700;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #707070;
+            --border-primary: rgba(0, 180, 216, 0.3);
+            --border-secondary: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(114, 9, 183, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 180, 216, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            border-bottom: 2px solid var(--border-primary);
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-title {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+        }
+
+        .resource-display {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-secondary);
+            border-radius: 8px;
+            padding: 12px 16px;
+            min-width: 120px;
+        }
+
+        .resource-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .resource-value {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .resource-rate {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 10px;
+            color: var(--accent-green);
+            margin-top: 2px;
+        }
+
+        /* 메인 컨테이너 */
+        .main-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        /* 탭 시스템 */
+        .tab-container {
+            background: rgba(22, 33, 62, 0.8);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .tab-header {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border-primary);
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'Exo 2', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-right: 1px solid var(--border-secondary);
+        }
+
+        .tab-button:last-child {
+            border-right: none;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(114, 9, 183, 0.1));
+            color: var(--accent-blue);
+            box-shadow: inset 0 -3px 0 var(--accent-blue);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .tab-content {
+            padding: 20px;
+            min-height: 700px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* 공통 스타일 */
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .subsection-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 12px;
+            margin-top: 20px;
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .item-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-blue);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .item-tag {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(0, 180, 216, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .button-primary {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 180, 216, 0.3);
+        }
+
+        .button-primary:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Cosmic Filaments */
+        .filament-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-family: 'Roboto Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        .evolution-section {
+            background: rgba(114, 9, 183, 0.05);
+            border: 1px solid rgba(114, 9, 183, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .evolution-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .evolution-stage {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-secondary);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .evolution-stage.completed {
+            background: rgba(114, 9, 183, 0.2);
+            border-color: var(--accent-purple);
+        }
+
+        .evolution-stage:hover {
+            border-color: var(--accent-purple);
+        }
+
+        /* Nebula System */
+        .nebula-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .nebula-grid-container {
+            background: rgba(114, 9, 183, 0.05);
+            border: 1px solid rgba(114, 9, 183, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .nebula-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .nebula-slot {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(114, 9, 183, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .nebula-slot:hover {
+            border-color: var(--accent-purple);
+            background: rgba(114, 9, 183, 0.1);
+        }
+
+        .nebula-slot.filled {
+            background: rgba(114, 9, 183, 0.2);
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        /* Rail Road System */
+        .star-map-container {
+            position: relative;
+            background: 
+                radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.2), transparent),
+                radial-gradient(2px 2px at 40% 70%, rgba(255, 255, 255, 0.1), transparent),
+                radial-gradient(1px 1px at 90% 40%, rgba(255, 255, 255, 0.1), transparent),
+                radial-gradient(1px 1px at 60% 10%, rgba(255, 255, 255, 0.2), transparent),
+                linear-gradient(135deg, rgba(0, 0, 20, 0.8), rgba(0, 0, 40, 0.4));
+            border: 2px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            min-height: 400px;
+            overflow: hidden;
+        }
+
+        .constellation-map {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+
+        .constellation-node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            transform-origin: center;
+        }
+
+        .constellation-core {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8), rgba(255, 152, 0, 0.4), transparent);
+            border: 2px solid rgba(255, 152, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .constellation-node.active .constellation-core {
+            background: radial-gradient(circle, rgba(255, 255, 255, 1), var(--accent-orange), rgba(255, 107, 53, 0.4));
+            border-color: var(--accent-orange);
+            box-shadow: 
+                0 0 20px var(--accent-orange),
+                0 0 40px rgba(255, 107, 53, 0.3),
+                inset 0 0 20px rgba(255, 255, 255, 0.3);
+            animation: starGlow 2s ease-in-out infinite alternate;
+        }
+
+        .constellation-node:hover .constellation-core {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(255, 152, 0, 0.7);
+        }
+
+        .constellation-symbol {
+            font-size: 24px;
+            color: white;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .constellation-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-primary);
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .rail-connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 152, 0, 0.3) 20%, 
+                rgba(255, 152, 0, 0.8) 50%, 
+                rgba(255, 152, 0, 0.3) 80%, 
+                transparent);
+            transform-origin: left center;
+            pointer-events: none;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .rail-connection.active {
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--accent-orange) 20%, 
+                rgba(255, 255, 255, 0.8) 50%, 
+                var(--accent-orange) 80%, 
+                transparent);
+            opacity: 1;
+            animation: railPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes starGlow {
+            0% { box-shadow: 0 0 20px var(--accent-orange), 0 0 40px rgba(255, 107, 53, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.3); }
+            100% { box-shadow: 0 0 30px var(--accent-orange), 0 0 60px rgba(255, 107, 53, 0.5), inset 0 0 30px rgba(255, 255, 255, 0.5); }
+        }
+
+        @keyframes railPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .train-icon {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-blue);
+            border-radius: 3px;
+            z-index: 10;
+            transition: all 0.5s ease;
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        .train-icon::before {
+            content: '🚂';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            font-size: 12px;
+        }
+
+        .station-progress {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 3px;
+        }
+
+        .station-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .station-dot.unlocked {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 4px var(--accent-orange);
+        }
+
+        .constellation-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .constellation-info-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-secondary);
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .constellation-info-card.active {
+            border-color: var(--accent-orange);
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        /* Upgrade Tree System */
+        .upgrade-tree-container {
+            position: relative;
+            background: 
+                radial-gradient(ellipse at center, rgba(0, 180, 216, 0.05) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(20, 20, 40, 0.2));
+            border: 2px solid var(--accent-blue);
+            border-radius: 20px;
+            padding: 40px;
+            min-height: 600px;
+            overflow: visible;
+        }
+
+        .tree-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+        }
+
+        .stellar-core-node {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, 
+                rgba(255, 255, 255, 0.9) 0%, 
+                var(--accent-blue) 30%, 
+                rgba(0, 180, 216, 0.6) 70%, 
+                transparent 100%);
+            border: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            text-align: center;
+            animation: coreRotation 10s linear infinite;
+            box-shadow: 
+                0 0 30px var(--accent-blue),
+                inset 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes coreRotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .upgrade-branch {
+            position: absolute;
+        }
+
+        .branch-production { 
+            top: 0; 
+            left: 50%; 
+            transform: translateX(-50%);
+        }
+
+        .branch-system { 
+            right: 0; 
+            top: 50%; 
+            transform: translateY(-50%);
+        }
+
+        .branch-evolution { 
+            bottom: 0; 
+            left: 50%; 
+            transform: translateX(-50%);
+        }
+
+        .branch-expansion { 
+            left: 0; 
+            top: 50%; 
+            transform: translateY(-50%);
+        }
+
+        .upgrade-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            margin: 20px;
+        }
+
+        .upgrade-node.purchased {
+            background: radial-gradient(circle, 
+                rgba(6, 255, 165, 0.3), 
+                rgba(6, 255, 165, 0.1));
+            border-color: var(--accent-green);
+            box-shadow: 0 0 15px rgba(6, 255, 165, 0.4);
+        }
+
+        .upgrade-node.available {
+            background: radial-gradient(circle, 
+                rgba(0, 180, 216, 0.3), 
+                rgba(0, 180, 216, 0.1));
+            border-color: var(--accent-blue);
+            animation: availablePulse 2s ease-in-out infinite;
+        }
+
+        .upgrade-node.locked {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.1);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @keyframes availablePulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(0, 180, 216, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 180, 216, 0.6); }
+        }
+
+        .upgrade-node:hover:not(.locked) {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .upgrade-connection {
+            position: absolute;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent);
+            height: 2px;
+            transform-origin: left center;
+            pointer-events: none;
+        }
+
+        .upgrade-connection.active {
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--accent-green) 50%, 
+                transparent);
+            animation: connectionFlow 3s ease-in-out infinite;
+        }
+
+        @keyframes connectionFlow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .branch-title {
+            position: absolute;
+            color: var(--accent-blue);
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .branch-production .branch-title {
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--accent-red);
+        }
+
+        .branch-system .branch-title {
+            right: -120px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-purple);
+        }
+
+        .branch-evolution .branch-title {
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--accent-yellow);
+        }
+
+        .branch-expansion .branch-title {
+            left: -120px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-green);
+        }
+
+        .upgrade-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 12px;
+            z-index: 100;
+            max-width: 200px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .upgrade-node:hover .upgrade-tooltip {
+            opacity: 1;
+        }
+
+        .intersection-node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, 
+                rgba(255, 215, 0, 0.4), 
+                rgba(255, 215, 0, 0.1));
+            border: 2px solid var(--accent-yellow);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .intersection-node:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px var(--accent-yellow);
+        }
+
+        .intersection-production-system {
+            top: 25%;
+            right: 25%;
+        }
+
+        .intersection-evolution-expansion {
+            bottom: 25%;
+            left: 25%;
+        }
+
+        /* Stellar Pulse System */
+        .pulse-status-display {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid var(--accent-yellow);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .pulse-current {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-yellow);
+            margin-bottom: 10px;
+        }
+
+        .pulse-timer {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .pulse-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pulse-button {
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+            border: none;
+            border-radius: 8px;
+            color: var(--bg-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pulse-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .pulse-effects {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* Memory System */
+        .memory-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .memory-slot {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed var(--border-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .memory-slot.filled {
+            border-style: solid;
+            border-color: var(--accent-green);
+            background: rgba(6, 255, 165, 0.1);
+        }
+
+        .memory-slot:hover {
+            border-color: var(--accent-green);
+            background: rgba(6, 255, 165, 0.05);
+        }
+
+        /* Evolution System */
+        .evolution-paths {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .evolution-path {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-secondary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .evolution-path.active {
+            border-color: var(--accent-purple);
+            background: rgba(114, 9, 183, 0.1);
+        }
+
+        .evolution-levels {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .evolution-level {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-secondary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .evolution-level.completed {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        /* Condensation System */
+        .condensation-display {
+            background: rgba(0, 180, 216, 0.1);
+            border: 2px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .investment-slider {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Events */
+        .event-card {
+            background: rgba(255, 107, 53, 0.1);
+            border: 2px solid var(--accent-orange);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .event-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-orange);
+            margin-bottom: 10px;
+        }
+
+        .event-progress {
+            width: 100%;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .event-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-red));
+            transition: width 0.3s ease;
+        }
+
+        /* 우측 패널 */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-panel {
+            background: rgba(22, 33, 62, 0.8);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-value {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .starburst-button {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .starburst-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 7, 58, 0.4);
+        }
+
+        .starburst-info {
+            margin-top: 15px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1400px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .resources-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .resources-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .tab-button {
+                flex: 1 1 33%;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="game-title">AETHER PROJECT</h1>
+            <div class="resources-grid">
+                <div class="resource-display">
+                    <div class="resource-label">Stardust</div>
+                    <div class="resource-value" id="stardust">1.25e24</div>
+                    <div class="resource-rate">+2.47e15/s</div>
+                </div>
+                <div class="resource-display">
+                    <div class="resource-label">Starlight</div>
+                    <div class="resource-value" id="starlight">8</div>
+                    <div class="resource-rate">Next: 1e120</div>
+                </div>
+                <div class="resource-display">
+                    <div class="resource-label">Star Rail</div>
+                    <div class="resource-value" id="star-rail">23</div>
+                    <div class="resource-rate">+0.5/Starburst</div>
+                </div>
+                <div class="resource-display">
+                    <div class="resource-label">Stellar Energy</div>
+                    <div class="resource-value" id="stellar-energy">847/1000</div>
+                    <div class="resource-rate">+1/s</div>
+                </div>
+                <div class="resource-display">
+                    <div class="resource-label">Nebular Essence</div>
+                    <div class="resource-value" id="nebular-essence">1,247</div>
+                    <div class="resource-rate">+12.4/buy</div>
+                </div>
+                <div class="resource-display">
+                    <div class="resource-label">Cosmic Fragment</div>
+                    <div class="resource-value" id="cosmic-fragment">156</div>
+                    <div class="resource-rate">+1/station</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 메인 탭 컨테이너 -->
+        <div class="tab-container">
+            <div class="tab-header">
+                <button class="tab-button active" data-tab="filaments">Cosmic Filaments</button>
+                <button class="tab-button" data-tab="nebula">Nebula Matrix</button>
+                <button class="tab-button" data-tab="railroad">Rail Road</button>
+                <button class="tab-button" data-tab="pulse">Stellar Pulse</button>
+                <button class="tab-button" data-tab="memory">Star Memory</button>
+                <button class="tab-button" data-tab="evolution">Evolution</button>
+                <button class="tab-button" data-tab="condensation">Condensation</button>
+                <button class="tab-button" data-tab="events">Events</button>
+                <button class="tab-button" data-tab="upgrades">Upgrades</button>
+                <button class="tab-button" data-tab="statistics">Statistics</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Cosmic Filaments 탭 -->
+                <div class="tab-panel active" id="filaments">
+                    <h3 class="section-title">Cosmic Filaments</h3>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Orion Filament</span>
+                                <span class="item-tag">Tier 1</span>
+                            </div>
+                            <div class="filament-stats">
+                                <div class="stat-item"><span class="stat-label">Owned:</span><span class="stat-value">25</span></div>
+                                <div class="stat-item"><span class="stat-label">Production:</span><span class="stat-value">×3.75</span></div>
+                                <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value">1.24e15</span></div>
+                                <div class="stat-item"><span class="stat-label">Rate:</span><span class="stat-value">5.12e14/s</span></div>
+                            </div>
+                            <button class="button-primary">Buy 1 (Cost: 1.24e15)</button>
+                            <div class="evolution-section">
+                                <div class="subsection-title">Evolution Progress</div>
+                                <div class="evolution-grid">
+                                    <div class="evolution-stage completed">Stage 1<br>×1.5 Prod</div>
+                                    <div class="evolution-stage completed">Stage 2<br>+25% Synergy</div>
+                                    <div class="evolution-stage">Stage 3<br>Special Power</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Eagle Filament</span>
+                                <span class="item-tag">Tier 2</span>
+                            </div>
+                            <div class="filament-stats">
+                                <div class="stat-item"><span class="stat-label">Owned:</span><span class="stat-value">18</span></div>
+                                <div class="stat-item"><span class="stat-label">Production:</span><span class="stat-value">×2.79</span></div>
+                                <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value">3.42e16</span></div>
+                                <div class="stat-item"><span class="stat-label">Rate:</span><span class="stat-value">1.85e13/s</span></div>
+                            </div>
+                            <button class="button-primary">Buy 1 (Cost: 3.42e16)</button>
+                            <div class="evolution-section">
+                                <div class="subsection-title">Evolution Progress</div>
+                                <div class="evolution-grid">
+                                    <div class="evolution-stage completed">Stage 1<br>×1.5 Prod</div>
+                                    <div class="evolution-stage">Stage 2<br>+25% Synergy</div>
+                                    <div class="evolution-stage">Stage 3<br>Special Power</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Crab Filament</span>
+                                <span class="item-tag">Tier 3</span>
+                            </div>
+                            <div class="filament-stats">
+                                <div class="stat-item"><span class="stat-label">Owned:</span><span class="stat-value">12</span></div>
+                                <div class="stat-item"><span class="stat-label">Production:</span><span class="stat-value">×1.92</span></div>
+                                <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value">7.89e18</span></div>
+                                <div class="stat-item"><span class="stat-label">Rate:</span><span class="stat-value">4.23e11/s</span></div>
+                            </div>
+                            <button class="button-primary">Buy 1 (Cost: 7.89e18)</button>
+                            <div class="evolution-section">
+                                <div class="subsection-title">Evolution Progress</div>
+                                <div class="evolution-grid">
+                                    <div class="evolution-stage">Stage 1<br>×1.5 Prod</div>
+                                    <div class="evolution-stage">Stage 2<br>+25% Synergy</div>
+                                    <div class="evolution-stage">Stage 3<br>Special Power</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Horsehead Filament</span>
+                                <span class="item-tag">Tier 4</span>
+                            </div>
+                            <div class="filament-stats">
+                                <div class="stat-item"><span class="stat-label">Owned:</span><span class="stat-value">8</span></div>
+                                <div class="stat-item"><span class="stat-label">Production:</span><span class="stat-value">×1.32</span></div>
+                                <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value">2.14e21</span></div>
+                                <div class="stat-item"><span class="stat-label">Rate:</span><span class="stat-value">9.87e09/s</span></div>
+                            </div>
+                            <button class="button-primary">Buy 1 (Cost: 2.14e21)</button>
+                            <div class="evolution-section">
+                                <div class="subsection-title">Evolution Progress</div>
+                                <div class="evolution-grid">
+                                    <div class="evolution-stage">Stage 1<br>×1.5 Prod</div>
+                                    <div class="evolution-stage">Stage 2<br>+25% Synergy</div>
+                                    <div class="evolution-stage">Stage 3<br>Special Power</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Trifid Filament</span>
+                                <span class="item-tag">Tier 5</span>
+                            </div>
+                            <div class="filament-stats">
+                                <div class="stat-item"><span class="stat-label">Owned:</span><span class="stat-value">3</span></div>
+                                <div class="stat-item"><span class="stat-label">Production:</span><span class="stat-value">×1.51</span></div>
+                                <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value">5.67e24</span></div>
+                                <div class="stat-item"><span class="stat-label">Rate:</span><span class="stat-value">1.23e07/s</span></div>
+                            </div>
+                            <button class="button-primary" disabled>Buy 1 (Cost: 5.67e24)</button>
+                            <div class="evolution-section">
+                                <div class="subsection-title">Evolution Progress</div>
+                                <div class="evolution-grid">
+                                    <div class="evolution-stage">Stage 1<br>×1.5 Prod</div>
+                                    <div class="evolution-stage">Stage 2<br>+25% Synergy</div>
+                                    <div class="evolution-stage">Stage 3<br>Special Power</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Planetary Filament</span>
+                                <span class="item-tag">Tier 6</span>
+                            </div>
+                            <div class="filament-stats">
+                                <div class="stat-item"><span class="stat-label">Owned:</span><span class="stat-value">0</span></div>
+                                <div class="stat-item"><span class="stat-label">Production:</span><span class="stat-value">×1.00</span></div>
+                                <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value">1.00e28</span></div>
+                                <div class="stat-item"><span class="stat-label">Rate:</span><span class="stat-value">0/s</span></div>
+                            </div>
+                            <button class="button-primary" disabled>Buy 1 (Cost: 1.00e28)</button>
+                            <div class="evolution-section">
+                                <div class="subsection-title">Evolution Progress</div>
+                                <div class="evolution-grid">
+                                    <div class="evolution-stage">Stage 1<br>×1.5 Prod</div>
+                                    <div class="evolution-stage">Stage 2<br>+25% Synergy</div>
+                                    <div class="evolution-stage">Stage 3<br>Special Power</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subsection-title">Milestones</div>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green); font-weight: 700;">10 Orion Filaments</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Production multiplier ×2</p>
+                        </div>
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green); font-weight: 700;">20 Orion Filaments</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Production multiplier ×4 (total ×8)</p>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">30 Orion Filaments</span>
+                                <span class="item-tag">25/30</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Production multiplier ×8 (total ×64)</p>
+                        </div>
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green); font-weight: 700;">10 Eagle Filaments</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Production multiplier ×2</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nebula Matrix 탭 -->
+                <div class="tab-panel" id="nebula">
+                    <div class="nebula-container">
+                        <div class="nebula-grid-container">
+                            <h3 class="section-title">Nebula Grid (3×3)</h3>
+                            <div class="nebula-grid">
+                                <div class="nebula-slot" data-position="0">T1</div>
+                                <div class="nebula-slot" data-position="1">T2</div>
+                                <div class="nebula-slot" data-position="2">T3</div>
+                                <div class="nebula-slot filled" data-position="3">T1</div>
+                                <div class="nebula-slot filled" data-position="4">T2</div>
+                                <div class="nebula-slot filled" data-position="5">T3</div>
+                                <div class="nebula-slot" data-position="6">T4</div>
+                                <div class="nebula-slot filled" data-position="7">T4</div>
+                                <div class="nebula-slot" data-position="8">T5</div>
+                            </div>
+                            <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 15px;">
+                                <div style="color: var(--accent-purple); font-weight: 600; margin-bottom: 10px;">Current Pattern: Cross Formation</div>
+                                <div style="font-size: 12px; line-height: 1.5;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span>Starlight gain:</span>
+                                        <span style="color: var(--accent-green);">×1.75</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>Synergy strength:</span>
+                                        <span style="color: var(--accent-blue);">×4.2</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="section-title">Nebula Upgrades</h3>
+                            <div class="item-grid" style="grid-template-columns: 1fr;">
+                                <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                                    <div class="item-header">
+                                        <span style="color: var(--accent-green);">Synergy Amplifier</span>
+                                        <span class="item-tag">Level 3</span>
+                                    </div>
+                                    <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Layer synergy effects ×1.5</p>
+                                    <button class="button-primary">Upgrade (150 Essence)</button>
+                                </div>
+                                <div class="item-card">
+                                    <div class="item-header">
+                                        <span class="item-name">Grid Conductor</span>
+                                        <span class="item-tag">Level 1</span>
+                                    </div>
+                                    <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Adjacent synergy effects +15%</p>
+                                    <button class="button-primary">Upgrade (200 Essence)</button>
+                                </div>
+                                <div class="item-card">
+                                    <div class="item-header">
+                                        <span class="item-name">Pattern Harmonizer</span>
+                                        <span class="item-tag">Level 0</span>
+                                    </div>
+                                    <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Pattern bonus effects ×2</p>
+                                    <button class="button-primary" disabled>Upgrade (500 Essence)</button>
+                                </div>
+                            </div>
+
+                            <h3 class="subsection-title">Pattern Bonuses</h3>
+                            <div class="item-grid" style="grid-template-columns: 1fr;">
+                                <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                                    <div class="item-name">Triangle Pattern - ACTIVE</div>
+                                    <p style="color: var(--text-secondary); font-size: 12px;">Production ×2.0 when 3 adjacent slots filled</p>
+                                </div>
+                                <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                                    <div class="item-name">Cross Pattern - ACTIVE</div>
+                                    <p style="color: var(--text-secondary); font-size: 12px;">Starlight gain ×1.75 when center + 4 directions filled</p>
+                                </div>
+                                <div class="item-card">
+                                    <div class="item-name">Square Pattern</div>
+                                    <p style="color: var(--text-secondary); font-size: 12px;">Costs ^0.6 when 2×2 area filled</p>
+                                </div>
+                                <div class="item-card">
+                                    <div class="item-name">Circle Pattern</div>
+                                    <p style="color: var(--text-secondary); font-size: 12px;">All synergies ×3 when outer edge filled</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rail Road 탭 -->
+                <div class="tab-panel" id="railroad">
+                    <h3 class="section-title">Constellation Navigation Network</h3>
+                    
+                    <div class="star-map-container">
+                        <div class="constellation-map">
+                            <!-- 별자리 노드들 -->
+                            <div class="constellation-node active" style="top: 20%; left: 50%;" data-constellation="sagittarius">
+                                <div class="constellation-core">
+                                    <span class="constellation-symbol">♐</span>
+                                </div>
+                                <div class="constellation-label">Sagittarius</div>
+                                <div class="station-progress">
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot"></div>
+                                    <div class="station-dot"></div>
+                                </div>
+                            </div>
+
+                            <div class="constellation-node" style="top: 35%; left: 20%;" data-constellation="leo">
+                                <div class="constellation-core">
+                                    <span class="constellation-symbol">♌</span>
+                                </div>
+                                <div class="constellation-label">Leo</div>
+                                <div class="station-progress">
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot"></div>
+                                    <div class="station-dot"></div>
+                                </div>
+                            </div>
+
+                            <div class="constellation-node active" style="top: 55%; left: 75%;" data-constellation="virgo">
+                                <div class="constellation-core">
+                                    <span class="constellation-symbol">♍</span>
+                                </div>
+                                <div class="constellation-label">Virgo</div>
+                                <div class="station-progress">
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                </div>
+                            </div>
+
+                            <div class="constellation-node" style="top: 75%; left: 35%;" data-constellation="scorpio">
+                                <div class="constellation-core">
+                                    <span class="constellation-symbol">♏</span>
+                                </div>
+                                <div class="constellation-label">Scorpio</div>
+                                <div class="station-progress">
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot"></div>
+                                    <div class="station-dot"></div>
+                                    <div class="station-dot"></div>
+                                </div>
+                            </div>
+
+                            <div class="constellation-node" style="top: 40%; left: 85%;" data-constellation="aquarius">
+                                <div class="constellation-core">
+                                    <span class="constellation-symbol">♒</span>
+                                </div>
+                                <div class="constellation-label">Aquarius</div>
+                                <div class="station-progress">
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot"></div>
+                                    <div class="station-dot"></div>
+                                    <div class="station-dot"></div>
+                                </div>
+                            </div>
+
+                            <div class="constellation-node active" style="top: 15%; left: 15%;" data-constellation="pisces">
+                                <div class="constellation-core">
+                                    <span class="constellation-symbol">♓</span>
+                                </div>
+                                <div class="constellation-label">Pisces</div>
+                                <div class="station-progress">
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                    <div class="station-dot unlocked"></div>
+                                </div>
+                            </div>
+
+                            <!-- 철도 연결선들 -->
+                            <div class="rail-connection active" style="top: 30%; left: 50%; width: 200px; transform: rotate(-45deg);"></div>
+                            <div class="rail-connection active" style="top: 55%; left: 75%; width: 150px; transform: rotate(135deg);"></div>
+                            <div class="rail-connection active" style="top: 20%; left: 15%; width: 250px; transform: rotate(25deg);"></div>
+                            <div class="rail-connection" style="top: 40%; left: 35%; width: 180px; transform: rotate(45deg);"></div>
+                            <div class="rail-connection" style="top: 60%; left: 55%; width: 120px; transform: rotate(-30deg);"></div>
+
+                            <!-- 열차 아이콘 -->
+                            <div class="train-icon" style="top: 25%; left: 55%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="constellation-details">
+                        <div class="constellation-info-card active">
+                            <div class="item-header">
+                                <span style="color: var(--accent-orange); font-weight: 600;">Sagittarius ♐</span>
+                                <span class="item-tag">ACTIVE</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin: 8px 0;">
+                                Status: 5/7 stations unlocked • Cost: 5 Star Rail
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Production ×10</div>
+                                <div style="color: var(--accent-red);">- Automation disabled</div>
+                            </div>
+                        </div>
+
+                        <div class="constellation-info-card active">
+                            <div class="item-header">
+                                <span style="color: var(--accent-orange); font-weight: 600;">Virgo ♍</span>
+                                <span class="item-tag">ACTIVE</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin: 8px 0;">
+                                Status: 6/6 stations unlocked • Cost: 5 Star Rail
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Nebula effects ×4</div>
+                                <div style="color: var(--accent-red);">- Essence gain ×0.6</div>
+                            </div>
+                        </div>
+
+                        <div class="constellation-info-card active">
+                            <div class="item-header">
+                                <span style="color: var(--accent-orange); font-weight: 600;">Pisces ♓</span>
+                                <span class="item-tag">ACTIVE</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin: 8px 0;">
+                                Status: 7/7 stations unlocked • Cost: 10 Star Rail
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Constellation effects ×2</div>
+                                <div style="color: var(--accent-red);">- Activation cost ×2</div>
+                            </div>
+                        </div>
+
+                        <div class="constellation-info-card">
+                            <div class="item-header">
+                                <span class="item-name">Leo ♌</span>
+                                <span class="item-tag">5/7 Complete</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin: 8px 0;">
+                                Status: Ready to activate • Cost: 5 Star Rail
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Pulse control +80%</div>
+                                <div style="color: var(--accent-red);">- Pulse penalties ×2</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Train System Upgrades</h3>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Fuel Efficiency</span>
+                                <span class="item-tag">Level 3</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Star Rail consumption -30%</p>
+                            <button class="button-primary">Upgrade (15 Star Rail)</button>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Navigation Array</span>
+                                <span class="item-tag">Level 2</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Constellation discovery range +40%</p>
+                            <button class="button-primary">Upgrade (20 Star Rail)</button>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Warp Drive</span>
+                                <span class="item-tag">Level 1</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Travel time between stations -60%</p>
+                            <button class="button-primary">Upgrade (25 Star Rail)</button>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Quantum Compass</span>
+                                <span class="item-tag">Level 0</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Unlock hidden constellation paths</p>
+                            <button class="button-primary" disabled>Upgrade (50 Star Rail)</button>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Constellation Group Synergies</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green); font-weight: 700;">Winter Solstice</span>
+                                <span class="item-tag">2/3 Active</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Pisces + Aquarius + Capricorn: Resource gain ×1.5, Penalties ^0.75</p>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Summer Triangle</span>
+                                <span class="item-tag">1/3 Active</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Leo + Virgo + Cygnus: System efficiency ^1.3, Penalties ^0.9</p>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Autumn Cross</span>
+                                <span class="item-tag">1/3 Active</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Sagittarius + Scorpio + Libra: Special effects ×2, Penalties ×1.2</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stellar Pulse 탭 -->
+                <div class="tab-panel" id="pulse">
+                    <div class="pulse-status-display">
+                        <div class="pulse-current">EXPANSION PHASE</div>
+                        <div class="pulse-timer">12.4s remaining</div>
+                    </div>
+
+                    <div class="pulse-controls">
+                        <button class="pulse-button">Normal Shift<br><small>Cost: 100 Energy</small></button>
+                        <button class="pulse-button">Rapid Shift<br><small>Cost: 250 Energy</small></button>
+                        <button class="pulse-button">Extend Phase<br><small>Cost: 50 Energy</small></button>
+                    </div>
+
+                    <div class="pulse-effects">
+                        <h4 style="color: var(--accent-yellow); margin-bottom: 10px;">Current Phase Effects</h4>
+                        <div style="font-size: 12px; line-height: 1.5;">
+                            <div style="color: var(--accent-green);">+ Production ×5</div>
+                            <div style="color: var(--accent-blue);">+ Rail Road speed ×2</div>
+                            <div style="color: var(--accent-red);">- Costs ×1.5</div>
+                            <div style="color: var(--accent-red);">- Prediction accuracy ×0.8</div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">Phase Information</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(255, 215, 0, 0.1); border-color: var(--accent-yellow);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-yellow); font-weight: 600;">Expansion Phase</span>
+                                <span class="item-tag">CURRENT</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">Duration: 15 seconds</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Production ×5</div>
+                                <div style="color: var(--accent-blue);">+ Rail Road speed ×2</div>
+                                <div style="color: var(--accent-red);">- Costs ×1.5</div>
+                                <div style="color: var(--accent-red);">- Prediction accuracy ×0.8</div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Contraction Phase</span>
+                                <span class="item-tag">Next</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">Duration: 15 seconds</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Starlight ×1.4</div>
+                                <div style="color: var(--accent-green);">+ Constellation effects ×2</div>
+                                <div style="color: var(--accent-green);">- Costs ^0.5</div>
+                                <div style="color: var(--accent-red);">- Production ×0.75</div>
+                                <div style="color: var(--accent-red);">- Movement speed ^0.7</div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Stable Phase</span>
+                                <span class="item-tag">10s Duration</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">Unlocked at 5 Starlight</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ All effects ×1.5</div>
+                                <div style="color: var(--accent-green);">+ Energy gain ×2</div>
+                                <div style="color: var(--accent-green);">- Star Rail cost ^0.6</div>
+                                <div style="color: var(--accent-red);">- Nebula synergy ×0.8</div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Turbulent Phase</span>
+                                <span class="item-tag">12s Duration</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">Unlocked at 12 Starlight</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Random production ^1.5 (every 5s)</div>
+                                <div style="color: var(--accent-green);">+ Essence gain ×2</div>
+                                <div style="color: var(--accent-green);">+ Constellation spike effects ×10</div>
+                                <div style="color: var(--accent-red);">- Filament effects ×0.65</div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Fusion Phase</span>
+                                <span class="item-tag">8s Duration</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">Unlocked at 12 Starlight</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Nebula synergy ^2</div>
+                                <div style="color: var(--accent-green);">+ Upgrade effects ×1.5</div>
+                                <div style="color: var(--accent-green);">+ Constellation effects ×3</div>
+                                <div style="color: var(--accent-red);">- Energy consumption ×3</div>
+                                <div style="color: var(--accent-red);">- Movement blocked</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Observatory Upgrades</h3>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Telescope Array</span>
+                                <span class="item-tag">Level 5</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Prediction accuracy: 75% → 85%</p>
+                            <button class="button-primary">Upgrade (150 Energy)</button>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Phase Analyzer</span>
+                                <span class="item-tag">Level 3</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Show exact remaining time for phases</p>
+                            <button class="button-primary">Upgrade (200 Energy)</button>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Energy Monitor</span>
+                                <span class="item-tag">Level 2</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Display detailed resource rates per phase</p>
+                            <button class="button-primary">Upgrade (100 Energy)</button>
+                        </div>
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Temporal Stabilizer</span>
+                                <span class="item-tag">Level 0</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Reduce instability chance from manual controls</p>
+                            <button class="button-primary" disabled>Upgrade (500 Energy)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Star Memory 탭 -->
+                <div class="tab-panel" id="memory">
+                    <h3 class="section-title">Memory Preservation Slots (3/5)</h3>
+                    <div class="memory-slots">
+                        <div class="memory-slot filled">
+                            <div style="color: var(--accent-green); font-weight: 600; margin-bottom: 8px;">Nebula Pattern</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">Cross formation<br>100% preserved</div>
+                        </div>
+                        
+                        <div class="memory-slot filled">
+                            <div style="color: var(--accent-green); font-weight: 600; margin-bottom: 8px;">Filament Evolution</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">Orion Tier 1<br>50% preserved</div>
+                        </div>
+                        
+                        <div class="memory-slot filled">
+                            <div style="color: var(--accent-green); font-weight: 600; margin-bottom: 8px;">Rail Road Progress</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">Sagittarius path<br>30% preserved</div>
+                        </div>
+                        
+                        <div class="memory-slot">
+                            <div style="color: var(--text-muted); font-size: 14px;">Empty Slot</div>
+                            <div style="font-size: 10px; color: var(--text-muted);">Click to configure</div>
+                        </div>
+                        
+                        <div class="memory-slot">
+                            <div style="color: var(--text-muted); font-size: 14px;">Empty Slot</div>
+                            <div style="font-size: 10px; color: var(--text-muted);">Unlocks at 15 Starlight</div>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Available Preservation Options</h3>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Filament Evolution</span>
+                                <span class="item-tag">Any Tier</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Preserve evolution stages at ^0.5 efficiency</p>
+                            <button class="button-primary">Configure Slot</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Nebula Configuration</span>
+                                <span class="item-tag">One Pattern</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Preserve complete nebula pattern placement</p>
+                            <button class="button-primary">Configure Slot</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Rail Road Progress</span>
+                                <span class="item-tag">One Path</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Preserve station progress at ^0.3 efficiency</p>
+                            <button class="button-primary">Configure Slot</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Upgrade Tree</span>
+                                <span class="item-tag">One Branch</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Preserve upgrade branch at ^0.25 efficiency</p>
+                            <button class="button-primary">Configure Slot</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Condensation Investment</span>
+                                <span class="item-tag">35% Preserved</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Preserve 35% of Starlight investment</p>
+                            <button class="button-primary">Configure Slot</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Observatory Upgrades</span>
+                                <span class="item-tag">25% Preserved</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Preserve stellar energy investments</p>
+                            <button class="button-primary">Configure Slot</button>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Memory Enhancements</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Enhanced Preservation</span>
+                                <span class="item-tag">8 Starlight</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">All preservation rates ×1.2</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Perfect Memory</span>
+                                <span class="item-tag">25 Starlight</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">One slot can preserve at 100% efficiency</p>
+                            <button class="button-primary" disabled>Unlock (25 Starlight)</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Memory Expansion</span>
+                                <span class="item-tag">15 Starlight</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Unlock 4th and 5th memory slots</p>
+                            <button class="button-primary" disabled>Unlock (15 Starlight)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evolution 탭 -->
+                <div class="tab-panel" id="evolution">
+                    <h3 class="section-title">Supernova Evolution Paths</h3>
+                    <div class="evolution-paths">
+                        <div class="evolution-path active">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <span style="color: var(--accent-purple); font-weight: 600; font-size: 16px;">White Dwarf</span>
+                                <span style="color: var(--text-muted); font-size: 12px;">Active Path</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 15px;">Focus on stability and efficiency. Reduces volatility while boosting consistent production.</p>
+                            <div class="evolution-levels">
+                                <div class="evolution-level completed">1</div>
+                                <div class="evolution-level completed">2</div>
+                                <div class="evolution-level completed">3</div>
+                                <div class="evolution-level">4</div>
+                                <div class="evolution-level">5</div>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ Stable production ×2.5</div>
+                                <div style="color: var(--accent-green);">+ Energy efficiency +50%</div>
+                                <div style="color: var(--accent-blue);">+ Pulse stability +40%</div>
+                            </div>
+                        </div>
+
+                        <div class="evolution-path">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <span style="color: var(--text-primary); font-weight: 600; font-size: 16px;">Red Giant</span>
+                                <span style="color: var(--text-muted); font-size: 12px;">Available</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 15px;">Massive expansion with powerful effects but increased resource consumption.</p>
+                            <div class="evolution-levels">
+                                <div class="evolution-level">1</div>
+                                <div class="evolution-level">2</div>
+                                <div class="evolution-level">3</div>
+                                <div class="evolution-level">4</div>
+                                <div class="evolution-level">5</div>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-green);">+ All production ×5</div>
+                                <div style="color: var(--accent-green);">+ Nebula range +2 slots</div>
+                                <div style="color: var(--accent-red);">- Energy costs ×3</div>
+                            </div>
+                        </div>
+
+                        <div class="evolution-path">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <span style="color: var(--text-primary); font-weight: 600; font-size: 16px;">Neutron Star</span>
+                                <span style="color: var(--text-muted); font-size: 12px;">Locked</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 15px;">Ultra-dense formation with extreme effects and magnetic field manipulation.</p>
+                            <div class="evolution-levels">
+                                <div class="evolution-level">1</div>
+                                <div class="evolution-level">2</div>
+                                <div class="evolution-level">3</div>
+                                <div class="evolution-level">4</div>
+                                <div class="evolution-level">5</div>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-blue);">+ Magnetic field effects</div>
+                                <div style="color: var(--accent-purple);">+ Gravity manipulation</div>
+                                <div style="color: var(--text-muted);">Requires 15 Starlight</div>
+                            </div>
+                        </div>
+
+                        <div class="evolution-path">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <span style="color: var(--text-primary); font-weight: 600; font-size: 16px;">Black Hole</span>
+                                <span style="color: var(--text-muted); font-size: 12px;">Locked</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 15px;">Ultimate evolution with reality-bending effects and spacetime distortion.</p>
+                            <div class="evolution-levels">
+                                <div class="evolution-level">1</div>
+                                <div class="evolution-level">2</div>
+                                <div class="evolution-level">3</div>
+                                <div class="evolution-level">4</div>
+                                <div class="evolution-level">5</div>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 12px; line-height: 1.4;">
+                                <div style="color: var(--accent-red);">+ Event horizon effects</div>
+                                <div style="color: var(--accent-purple);">+ Time dilation</div>
+                                <div style="color: var(--text-muted);">Requires 25 Starlight</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Current Evolution Effects</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(114, 9, 183, 0.1); border-color: var(--accent-purple);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-purple);">White Dwarf Level 3</span>
+                                <span class="item-tag">Active</span>
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4; margin-top: 8px;">
+                                <div style="color: var(--accent-green);">+ Base production ×8</div>
+                                <div style="color: var(--accent-green);">+ Energy efficiency ×1.5</div>
+                                <div style="color: var(--accent-blue);">+ Reduced pulse volatility</div>
+                                <div style="color: var(--accent-yellow);">+ Stable Starlight generation</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Stellar Essence</h3>
+                    <div style="background: rgba(114, 9, 183, 0.1); border: 1px solid var(--accent-purple); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="color: var(--accent-purple); font-weight: 600; font-size: 16px;">Stellar Essence: 247</span>
+                            <span style="color: var(--text-muted); font-size: 12px;">+12 per Supernova</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 12px;">Gained from Supernova resets. Used to advance evolution paths and unlock new stellar forms.</p>
+                    </div>
+                </div>
+
+                <!-- Condensation 탭 -->
+                <div class="tab-panel" id="condensation">
+                    <div class="condensation-display">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="color: var(--accent-blue); font-weight: 700; font-size: 18px;">Nova Condensation</span>
+                            <span style="color: var(--text-primary); font-size: 14px;">Progress: 72%</span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-size: 14px; margin-bottom: 5px;">Invested Starlight: 72 / 120</div>
+                            <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; height: 12px; overflow: hidden;">
+                                <div style="background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); height: 100%; width: 60%; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.4;">
+                            <div>Current effect: Starburst goal ^0.28 (72% reduction)</div>
+                            <div>Next threshold at 100 Starlight: Nova preparation phase begins</div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">Investment Controls</h3>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Invest 1 Starlight</span>
+                                <span class="item-tag">Available</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Goal reduction: ^0.99 (additional 1% reduction)</p>
+                            <button class="button-primary">Invest 1 (8 → 7 Starlight)</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Invest 5 Starlight</span>
+                                <span class="item-tag">Available</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Goal reduction: ^0.95 (additional 5% reduction)</p>
+                            <button class="button-primary">Invest 5 (8 → 3 Starlight)</button>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Invest All</span>
+                                <span class="item-tag">Available</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Goal reduction: ^0.92 (additional 8% reduction)</p>
+                            <button class="button-primary">Invest All (8 Starlight)</button>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Investment Milestones</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">10 Starlight</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Stardust production ×1.1/Starlight invested</p>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">50 Starlight</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Starburst effects ×1.5, Nebula synergy ^1.3</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">100 Starlight</span>
+                                <span class="item-tag">72/100</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Nova Condensation phenomenon begins</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">120 Starlight</span>
+                                <span class="item-tag">72/120</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Nova Layer transition becomes available</p>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">System Interactions</h3>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Nebula Resonance</span>
+                                <span class="item-tag">Cross Pattern</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Cross pattern: Condensation efficiency ×1.15</p>
+                            <div style="color: var(--accent-green); font-size: 11px;">Currently active</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Pulse Synchronization</span>
+                                <span class="item-tag">Fusion Phase</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Investing during Fusion: Bonus ×1.25 effect</p>
+                            <div style="color: var(--text-muted); font-size: 11px;">Phase not active</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Rail Circulation</span>
+                                <span class="item-tag">Special Route</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Circular constellation route: Investment cost ^0.9</p>
+                            <div style="color: var(--text-muted); font-size: 11px;">Route not configured</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events 탭 -->
+                <div class="tab-panel" id="events">
+                    <div class="event-card">
+                        <div class="event-title">Stellar Resonance Event</div>
+                        <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 15px;">
+                            A harmonic resonance has been detected between constellation networks. Complete the challenge within 5 minutes to unlock powerful synergies.
+                        </div>
+                        <div class="event-progress">
+                            <div class="event-progress-bar" style="width: 65%;"></div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Progress: 65% (3 of 5 tasks completed)</div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="color: var(--accent-orange); margin-bottom: 8px;">Required Tasks:</h4>
+                            <div style="font-size: 12px; line-height: 1.6;">
+                                <div style="color: var(--accent-green);">✓ Activate 3 specific constellations</div>
+                                <div style="color: var(--accent-green);">✓ Maintain Fusion phase for 30 seconds</div>
+                                <div style="color: var(--accent-green);">✓ Configure Cross nebula pattern</div>
+                                <div style="color: var(--accent-yellow);">○ Reach 5 pulse state transitions</div>
+                                <div style="color: var(--accent-yellow);">○ Complete 12 station unlocks</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 12px;">
+                            <h4 style="color: var(--accent-orange); margin-bottom: 8px;">Rewards:</h4>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div>+ Nebula-Pulse synergy ^1.5</div>
+                                <div>+ Starburst production boost</div>
+                                <div>+ Unlock special constellation pattern</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">Upcoming Events</h3>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Supernova Precursor</span>
+                                <span class="item-tag">18 Starlight</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Signs of stellar instability detected. Prepare for massive energy fluctuations.</p>
+                            <div style="font-size: 11px; color: var(--text-muted);">Unlocks at 18 Starlight</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Gravitational Wave</span>
+                                <span class="item-tag">Random</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Ripples in spacetime affect all systems. 5% chance per Starburst.</p>
+                            <div style="font-size: 11px; color: var(--text-muted);">Duration: 2 minutes</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Quantum Resonance</span>
+                                <span class="item-tag">Pulse Sync</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">All pulse phases synchronize for massive efficiency boost.</p>
+                            <div style="font-size: 11px; color: var(--text-muted);">Triggered by 10 manual pulse transitions</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Dimensional Rift</span>
+                                <span class="item-tag">Rare</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Brief glimpse into higher dimensions. Unlock temporary abilities.</p>
+                            <div style="font-size: 11px; color: var(--text-muted);">0.1% chance per minute</div>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Event History</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.05); border-color: rgba(6, 255, 165, 0.3);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Stellar Alignment</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">All 12 constellations briefly aligned, granting massive synergy boost.</p>
+                            <div style="font-size: 11px; color: var(--accent-green);">Reward: Permanent +25% to all constellation effects</div>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(255, 107, 53, 0.05); border-color: rgba(255, 107, 53, 0.3);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-orange);">Solar Storm</span>
+                                <span class="item-tag">Failed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Intense stellar activity overwhelmed energy systems.</p>
+                            <div style="font-size: 11px; color: var(--accent-red);">Missed opportunity: Enhanced pulse control</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upgrades 탭 -->
+                <div class="tab-panel" id="upgrades">
+                    <h3 class="section-title">Starlight Upgrade Tree</h3>
+                    
+                    <div class="upgrade-tree-container">
+                        <!-- 중심 노드 -->
+                        <div class="tree-center">
+                            <div class="stellar-core-node">
+                                STELLAR<br>CORE
+                            </div>
+                        </div>
+
+                        <!-- Production Branch (위쪽) -->
+                        <div class="upgrade-branch branch-production">
+                            <div class="branch-title">Stellar Heart</div>
+                            
+                            <!-- 1단계 -->
+                            <div class="upgrade-node purchased" style="top: 60px;">
+                                <span style="font-size: 10px; color: white;">🔥</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Nuclear Fusion</strong><br>
+                                    Cost: 2 Starlight<br>
+                                    All production ×8<br>
+                                    <span style="color: var(--accent-green);">PURCHASED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 2단계 -->
+                            <div class="upgrade-node purchased" style="top: 120px;">
+                                <span style="font-size: 10px; color: white;">💗</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Stellar Heartbeat</strong><br>
+                                    Cost: 5 Starlight<br>
+                                    Milestone effects ^1.5<br>
+                                    <span style="color: var(--accent-green);">PURCHASED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3단계 -->
+                            <div class="upgrade-node available" style="top: 180px;">
+                                <span style="font-size: 10px; color: white;">⚡</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Photon Acceleration</strong><br>
+                                    Cost: 8 Starlight<br>
+                                    Time flow ×4 (production only)<br>
+                                    <span style="color: var(--accent-blue);">AVAILABLE</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 4단계 -->
+                            <div class="upgrade-node locked" style="top: 240px;">
+                                <span style="font-size: 10px; color: gray;">🌟</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Supernova Energy</strong><br>
+                                    Cost: 15 Starlight<br>
+                                    Production ^1.3, pulse cycles ^0.5<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+
+                            <!-- 연결선들 -->
+                            <div class="upgrade-connection active" style="top: 80px; left: 30px; width: 40px; transform: rotate(90deg);"></div>
+                            <div class="upgrade-connection active" style="top: 140px; left: 30px; width: 40px; transform: rotate(90deg);"></div>
+                            <div class="upgrade-connection" style="top: 200px; left: 30px; width: 40px; transform: rotate(90deg);"></div>
+                        </div>
+
+                        <!-- System Branch (오른쪽) -->
+                        <div class="upgrade-branch branch-system">
+                            <div class="branch-title">Cosmic Shoulders</div>
+                            
+                            <!-- 1단계 -->
+                            <div class="upgrade-node purchased" style="left: -60px;">
+                                <span style="font-size: 10px; color: white;">🌐</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Cosmic Network</strong><br>
+                                    Cost: 3 Starlight<br>
+                                    All synergies ×5<br>
+                                    <span style="color: var(--accent-green);">PURCHASED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 2단계 -->
+                            <div class="upgrade-node available" style="left: -120px;">
+                                <span style="font-size: 10px; color: white;">📐</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Dimensional Fold</strong><br>
+                                    Cost: 7 Starlight<br>
+                                    Selected system synergies ^2<br>
+                                    <span style="color: var(--accent-blue);">AVAILABLE</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3단계 -->
+                            <div class="upgrade-node locked" style="left: -180px;">
+                                <span style="font-size: 10px; color: gray;">🌀</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Multiverse Paradox</strong><br>
+                                    Cost: 12 Starlight<br>
+                                    System effects ×8, debuffs apply<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 4단계 -->
+                            <div class="upgrade-node locked" style="left: -240px;">
+                                <span style="font-size: 10px; color: gray;">⚙️</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Cosmic Synchronization</strong><br>
+                                    Cost: 20 Starlight<br>
+                                    Auto-optimization + effects ×2<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+
+                            <!-- 연결선들 -->
+                            <div class="upgrade-connection active" style="top: 30px; left: -80px; width: 40px;"></div>
+                            <div class="upgrade-connection" style="top: 30px; left: -140px; width: 40px;"></div>
+                            <div class="upgrade-connection" style="top: 30px; left: -200px; width: 40px;"></div>
+                        </div>
+
+                        <!-- Evolution Branch (아래쪽) -->
+                        <div class="upgrade-branch branch-evolution">
+                            <div class="branch-title">River of Time</div>
+                            
+                            <!-- 1단계 -->
+                            <div class="upgrade-node available" style="bottom: 60px;">
+                                <span style="font-size: 10px; color: white;">⏰</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Time Resonance</strong><br>
+                                    Cost: 4 Starlight<br>
+                                    Starburst effects ×5<br>
+                                    <span style="color: var(--accent-blue);">AVAILABLE</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 2단계 -->
+                            <div class="upgrade-node locked" style="bottom: 120px;">
+                                <span style="font-size: 10px; color: gray;">⚛️</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Quantum Invariance</strong><br>
+                                    Cost: 9 Starlight<br>
+                                    Preservation rates ×5<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3단계 -->
+                            <div class="upgrade-node locked" style="bottom: 180px;">
+                                <span style="font-size: 10px; color: gray;">⚓</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Dimensional Anchor</strong><br>
+                                    Cost: 14 Starlight<br>
+                                    Every 3rd Starburst: no reset<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 4단계 -->
+                            <div class="upgrade-node locked" style="bottom: 240px;">
+                                <span style="font-size: 10px; color: gray;">♾️</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Eternity Loop</strong><br>
+                                    Cost: 25 Starlight<br>
+                                    Auto-preserve progress ^0.4<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+
+                            <!-- 연결선들 -->
+                            <div class="upgrade-connection" style="bottom: 80px; left: 30px; width: 40px; transform: rotate(-90deg);"></div>
+                            <div class="upgrade-connection" style="bottom: 140px; left: 30px; width: 40px; transform: rotate(-90deg);"></div>
+                            <div class="upgrade-connection" style="bottom: 200px; left: 30px; width: 40px; transform: rotate(-90deg);"></div>
+                        </div>
+
+                        <!-- Expansion Branch (왼쪽) -->
+                        <div class="upgrade-branch branch-expansion">
+                            <div class="branch-title">Stellar Will</div>
+                            
+                            <!-- 1단계 -->
+                            <div class="upgrade-node available" style="right: -60px;">
+                                <span style="font-size: 10px; color: white;">🌌</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Parallel Universe</strong><br>
+                                    Cost: 6 Starlight<br>
+                                    Pulse states apply simultaneously ×1.5<br>
+                                    <span style="color: var(--accent-blue);">AVAILABLE</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 2단계 -->
+                            <div class="upgrade-node locked" style="right: -120px;">
+                                <span style="font-size: 10px; color: gray;">🌊</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Space Expansion</strong><br>
+                                    Cost: 10 Starlight<br>
+                                    All grid positions allow same filament<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3단계 -->
+                            <div class="upgrade-node locked" style="right: -180px;">
+                                <span style="font-size: 10px; color: gray;">🔮</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Constellation Resonance</strong><br>
+                                    Cost: 16 Starlight<br>
+                                    Each Starburst: random constellation ^2<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 4단계 -->
+                            <div class="upgrade-node locked" style="right: -240px;">
+                                <span style="font-size: 10px; color: gray;">🌍</span>
+                                <div class="upgrade-tooltip">
+                                    <strong>Reality Expansion</strong><br>
+                                    Cost: 30 Starlight<br>
+                                    Filament counts ^1.5, milestone req ^0.8<br>
+                                    <span style="color: var(--text-muted);">LOCKED</span>
+                                </div>
+                            </div>
+
+                            <!-- 연결선들 -->
+                            <div class="upgrade-connection" style="top: 30px; right: -80px; width: 40px; transform: rotate(180deg);"></div>
+                            <div class="upgrade-connection" style="top: 30px; right: -140px; width: 40px; transform: rotate(180deg);"></div>
+                            <div class="upgrade-connection" style="top: 30px; right: -200px; width: 40px; transform: rotate(180deg);"></div>
+                        </div>
+
+                        <!-- 교차점 업그레이드들 -->
+                        <div class="intersection-node intersection-production-system">
+                            <span style="font-size: 12px;">💎</span>
+                            <div class="upgrade-tooltip">
+                                <strong>Production × System</strong><br>
+                                Cost: 25 Starlight<br>
+                                Mega production boost OR complex system unlock<br>
+                                <span style="color: var(--text-muted);">LOCKED</span>
+                            </div>
+                        </div>
+
+                        <div class="intersection-node intersection-evolution-expansion">
+                            <span style="font-size: 12px;">🌠</span>
+                            <div class="upgrade-tooltip">
+                                <strong>Evolution × Expansion</strong><br>
+                                Cost: 35 Starlight<br>
+                                Time mastery OR dimensional transcendence<br>
+                                <span style="color: var(--text-muted);">LOCKED</span>
+                            </div>
+                        </div>
+
+                        <!-- 중심에서 각 브랜치로의 연결선들 -->
+                        <div class="upgrade-connection active" style="top: 40px; left: 40px; width: 60px; transform: rotate(-90deg);"></div>
+                        <div class="upgrade-connection active" style="top: 40px; right: 40px; width: 60px; transform: rotate(0deg);"></div>
+                        <div class="upgrade-connection" style="bottom: 40px; left: 40px; width: 60px; transform: rotate(90deg);"></div>
+                        <div class="upgrade-connection" style="top: 40px; left: -20px; width: 60px; transform: rotate(180deg);"></div>
+                    </div>
+
+                    <h3 class="subsection-title">Current Active Effects</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Nuclear Fusion Ignition</span>
+                                <span class="item-tag">Active</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">All production ×8</p>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Stellar Heartbeat</span>
+                                <span class="item-tag">Active</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Milestone effects ^1.5</p>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Cosmic Network</span>
+                                <span class="item-tag">Active</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">All synergies ×5</p>
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">Secret Upgrades</h3>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(255, 215, 0, 0.1); border: 2px dashed var(--accent-yellow);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-yellow);">Hidden Knowledge I</span>
+                                <span class="item-tag">???</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Complete all stellar resonance events</p>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(255, 215, 0, 0.1); border: 2px dashed var(--accent-yellow);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-yellow);">Perfect Harmony</span>
+                                <span class="item-tag">???</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Achieve perfect nebula pattern harmony</p>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(255, 215, 0, 0.1); border: 2px dashed var(--accent-yellow);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-yellow);">Constellation Master</span>
+                                <span class="item-tag">???</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Unlock all constellation synergies simultaneously</p>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(255, 215, 0, 0.1); border: 2px dashed var(--accent-yellow);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-yellow);">Pulse Transcendence</span>
+                                <span class="item-tag">???</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Master all pulse phases without instability</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics 탭 -->
+                <div class="tab-panel" id="statistics">
+                    <h3 class="section-title">Game Statistics</h3>
+                    
+                    <div class="subsection-title">Progress Overview</div>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Total Starbursts</span>
+                                <span class="item-tag">Lifetime</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--accent-red); margin: 8px 0;">12</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Average time: 11m 30s</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Total Starlight</span>
+                                <span class="item-tag">Lifetime</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--accent-blue); margin: 8px 0;">8</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Next at: 1e120 Stardust</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Peak Stardust</span>
+                                <span class="item-tag">All Time</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--accent-green); margin: 8px 0;">1.25e24</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Current run maximum</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Play Time</span>
+                                <span class="item-tag">Session</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--accent-purple); margin: 8px 0;">2h 34m</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Total: 8h 47m</p>
+                        </div>
+                    </div>
+
+                    <div class="subsection-title">Resource Statistics</div>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Filaments Purchased</span>
+                                <span class="item-tag">Lifetime</span>
+                            </div>
+                            <div style="font-size: 20px; font-weight: 600; color: var(--accent-blue); margin: 8px 0;">1,247</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div>Tier 1: 456 purchased</div>
+                                <div>Tier 2: 287 purchased</div>
+                                <div>Tier 3: 184 purchased</div>
+                                <div>Tier 4: 142 purchased</div>
+                                <div>Tier 5: 89 purchased</div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Rail Road Progress</span>
+                                <span class="item-tag">Current</span>
+                            </div>
+                            <div style="font-size: 20px; font-weight: 600; color: var(--accent-orange); margin: 8px 0;">23/84</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div>Stations unlocked: 23</div>
+                                <div>Active constellations: 3</div>
+                                <div>Completed paths: 1</div>
+                                <div>Star Rail spent: 67</div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Stellar Energy</span>
+                                <span class="item-tag">Usage Stats</span>
+                            </div>
+                            <div style="font-size: 20px; font-weight: 600; color: var(--accent-yellow); margin: 8px 0;">2,847</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div>Total consumed: 2,847</div>
+                                <div>Pulse transitions: 89</div>
+                                <div>Manual controls: 23</div>
+                                <div>Phase extensions: 12</div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Nebular Essence</span>
+                                <span class="item-tag">Usage Stats</span>
+                            </div>
+                            <div style="font-size: 20px; font-weight: 600; color: var(--accent-purple); margin: 8px 0;">4,892</div>
+                            <div style="font-size: 12px; line-height: 1.4;">
+                                <div>Total earned: 4,892</div>
+                                <div>Spent on upgrades: 3,645</div>
+                                <div>Evolution investments: 1,987</div>
+                                <div>Current balance: 1,247</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subsection-title">System Usage</div>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Nebula Patterns</span>
+                                <span class="item-tag">Records</span>
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4; margin-top: 8px;">
+                                <div>Pattern changes: 47</div>
+                                <div>Cross formations: 12</div>
+                                <div>Triangle formations: 8</div>
+                                <div>Square formations: 3</div>
+                                <div>Max synergy achieved: ×8.4</div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Memory System</span>
+                                <span class="item-tag">Efficiency</span>
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4; margin-top: 8px;">
+                                <div>Slots configured: 3/5</div>
+                                <div>Average preservation: 67%</div>
+                                <div>Best preservation: 100%</div>
+                                <div>Memory resets: 4</div>
+                                <div>Saved progress: 2,847 units</div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Evolution Paths</span>
+                                <span class="item-tag">Development</span>
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4; margin-top: 8px;">
+                                <div>Active path: White Dwarf</div>
+                                <div>Current level: 3/10</div>
+                                <div>Stellar essence earned: 247</div>
+                                <div>Supernovas triggered: 8</div>
+                                <div>Evolution unlocks: 1/4</div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Events Completed</span>
+                                <span class="item-tag">Achievements</span>
+                            </div>
+                            <div style="font-size: 12px; line-height: 1.4; margin-top: 8px;">
+                                <div>Stellar Alignment: ✓</div>
+                                <div>Solar Storm: ✗</div>
+                                <div>Quantum Resonance: ✓</div>
+                                <div>Gravitational Wave: ✓</div>
+                                <div>Success rate: 75%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subsection-title">Milestones & Achievements</div>
+                    <div class="item-grid">
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Stellar Engineer</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Complete first Cross pattern</p>
+                            <div style="font-size: 11px; color: var(--accent-green);">Reward: Pattern efficiency +10%</div>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Constellation Master</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Activate 3 constellations simultaneously</p>
+                            <div style="font-size: 11px; color: var(--accent-green);">Reward: Rail efficiency +15%</div>
+                        </div>
+                        
+                        <div class="item-card" style="background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                            <div class="item-header">
+                                <span style="color: var(--accent-green);">Pulse Master</span>
+                                <span class="item-tag">Completed</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Manual pulse control 50 times</p>
+                            <div style="font-size: 11px; color: var(--accent-green);">Reward: Energy efficiency +25%</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Starburst Specialist</span>
+                                <span class="item-tag">12/25</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Trigger 25 Starbursts</p>
+                            <div style="font-size: 11px; color: var(--text-muted);">Reward: Starburst efficiency +50%</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Memory Keeper</span>
+                                <span class="item-tag">3/5</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Configure all memory slots</p>
+                            <div style="font-size: 11px; color: var(--text-muted);">Reward: +1 bonus memory slot</div>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Evolution Pioneer</span>
+                                <span class="item-tag">1/4</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin: 8px 0;">Unlock all evolution paths</p>
+                            <div style="font-size: 11px; color: var(--text-muted);">Reward: Evolution speed ×2</div>
+                        </div>
+                    </div>
+
+                    <div class="subsection-title">Progress Records</div>
+                    <div class="item-grid">
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Best Starburst Time</span>
+                                <span class="item-tag">Record</span>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; color: var(--accent-red); margin: 8px 0;">4m 23s</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">From Tier 4 to Tier 5 unlock</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Longest Fusion Phase</span>
+                                <span class="item-tag">Record</span>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; color: var(--accent-purple); margin: 8px 0;">47s</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Extended through manual control</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Max Production Rate</span>
+                                <span class="item-tag">Record</span>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; color: var(--accent-green); margin: 8px 0;">4.89e16/s</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">During Expansion + Cross pattern</p>
+                        </div>
+                        
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">Highest Synergy</span>
+                                <span class="item-tag">Record</span>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; color: var(--accent-blue); margin: 8px 0;">×12.7</div>
+                            <p style="color: var(--text-secondary); font-size: 12px;">Circle pattern + constellation boost</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 우측 정보 패널 -->
+        <div class="right-panel">
+            <!-- 별의 맥동 상태 -->
+            <div class="info-panel" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 152, 0, 0.05)); border: 2px solid var(--accent-yellow); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--accent-yellow), transparent); animation: scan 3s linear infinite;"></div>
+                
+                <h3 class="panel-title" style="color: var(--accent-yellow); display: flex; align-items: center; gap: 10px;">
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: var(--accent-yellow); animation: heartbeat 1.5s ease-in-out infinite;"></span>
+                    STELLAR PULSE MONITOR
+                </h3>
+                
+                <div style="background: rgba(0, 0, 0, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="color: var(--accent-yellow); font-weight: 700; font-size: 20px;">EXPANSION PHASE</span>
+                        <span style="color: var(--accent-blue); font-family: 'Roboto Mono', monospace; font-size: 16px; font-weight: 600;">12.4s</span>
+                    </div>
+                    
+                    <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 15px;">
+                        <div style="background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange)); height: 100%; width: 83%; transition: width 0.1s linear;"></div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 12px;">
+                        <div>
+                            <div style="color: var(--accent-green); margin-bottom: 4px;">+ Production ×5</div>
+                            <div style="color: var(--accent-blue); margin-bottom: 4px;">+ Rail Speed ×2</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--accent-red); margin-bottom: 4px;">- Costs ×1.5</div>
+                            <div style="color: var(--accent-red); margin-bottom: 4px;">- Accuracy ×0.8</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Phase Transitions</span>
+                        <span class="status-value" style="color: var(--accent-yellow);">89</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Manual Controls</span>
+                        <span class="status-value" style="color: var(--accent-blue);">23</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Energy Level</span>
+                        <span class="status-value" style="color: var(--accent-green);">847/1000</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Instability Risk</span>
+                        <span class="status-value" style="color: var(--accent-red);">Low</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Prediction Accuracy</span>
+                        <span class="status-value" style="color: var(--accent-purple);">75%</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Next Goal ETA</span>
+                        <span class="status-value" style="color: var(--accent-orange);">3m 42s</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Starburst -->
+            <div class="info-panel">
+                <div style="text-align: center;">
+                    <h3 class="panel-title">Starburst</h3>
+                    <button class="starburst-button" onclick="triggerStarburst()">
+                        Trigger Starburst
+                    </button>
+                    <div class="starburst-info">
+                        <strong>Next Starburst at:</strong> 50 Trifid Filaments<br>
+                        <strong>Effect:</strong> Production ×1.5, Unlock Tier 6<br>
+                        <strong>Star Rail gain:</strong> +1<br>
+                        <strong>Current multiplier:</strong> ×432
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="info-panel">
+                <h3 class="panel-title">Recent Achievements</h3>
+                <div class="status-grid">
+                    <div class="item-card" style="padding: 8px; background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                        <div style="color: var(--accent-green); font-size: 12px; font-weight: 600;">Stellar Engineer</div>
+                        <div style="color: var(--text-secondary); font-size: 10px;">Complete first Cross pattern</div>
+                    </div>
+                    <div class="item-card" style="padding: 8px; background: rgba(6, 255, 165, 0.1); border-color: var(--accent-green);">
+                        <div style="color: var(--accent-green); font-size: 12px; font-weight: 600;">Constellation Master</div>
+                        <div style="color: var(--text-secondary); font-size: 10px;">Activate 3 constellations</div>
+                    </div>
+                    <div class="item-card" style="padding: 8px;">
+                        <div style="color: var(--text-muted); font-size: 12px; font-weight: 600;">Pulse Conductor</div>
+                        <div style="color: var(--text-secondary); font-size: 10px;">Manual pulse control 50 times</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nova 준비 -->
+            <div class="info-panel" style="background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 7, 58, 0.05));">
+                <h3 class="panel-title" style="color: var(--accent-orange);">Nova Preparation</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Condensation Progress</span>
+                        <span class="status-value" style="color: var(--accent-blue);">72/120</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Goal Reduction</span>
+                        <span class="status-value" style="color: var(--accent-green);">72%</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Nova Readiness</span>
+                        <span class="status-value" style="color: var(--accent-orange);">60%</span>
+                    </div>
+                </div>
+                <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 12px; margin-top: 15px;">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Nova Layer Transition:</div>
+                    <div style="font-size: 11px; line-height: 1.4; color: var(--text-muted);">
+                        Requires 120 Starlight investment + completion of Nova preparation quests
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

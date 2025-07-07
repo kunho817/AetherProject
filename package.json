@@ -1,0 +1,27 @@
+{
+  "name": "aether",
+  "version": "1.0.0",
+  "main": "break_eternity.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
+    "lint": "echo \"No linting configured\"",
+    "format": "echo \"No formatting configured\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/tsconfig": "^0.7.0",
+    "break_infinity.js": "^2.2.0",
+    "pinia": "^3.0.3",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.2",
+    "vue": "^3.5.17",
+    "vue-tsc": "^3.0.1"
+  }
+}

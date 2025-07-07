@@ -1,0 +1,670 @@
+/* ===== GLOBAL ANIMATIONS AND EFFECTS ===== */
+
+/* CSS Custom Properties for Animation Control */
+:root {
+  --animation-duration-fast: 0.2s;
+  --animation-duration-normal: 0.3s;
+  --animation-duration-slow: 0.5s;
+  --animation-easing: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --animation-easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --animation-easing-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Particle and effect colors */
+  --particle-stardust: #ffd700;
+  --particle-starlight: #e0e7ff;
+  --particle-energy: #00d4ff;
+  --particle-cosmic: #9333ea;
+  --particle-nebula: #06b6d4;
+}
+
+/* ===== UTILITY ANIMATIONS ===== */
+
+/* Hover Lift Effect */
+.hover-lift {
+  transition: transform var(--animation-duration-normal) var(--animation-easing),
+              box-shadow var(--animation-duration-normal) var(--animation-easing);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Scale on Hover */
+.hover-scale {
+  transition: transform var(--animation-duration-normal) var(--animation-easing);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Glow Effect */
+.glow {
+  transition: box-shadow var(--animation-duration-normal) var(--animation-easing);
+}
+
+.glow:hover {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Gentle Float */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Rotation Animation */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotate {
+  animation: rotate 10s linear infinite;
+}
+
+.rotate-fast {
+  animation: rotate 2s linear infinite;
+}
+
+/* ===== STARDUST PRODUCTION EFFECTS ===== */
+
+/* Stardust Particle Generation */
+@keyframes stardust-particle {
+  0% {
+    transform: translateY(0) scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(0.5) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.stardust-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, var(--particle-stardust) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: stardust-particle 2s ease-out forwards;
+}
+
+/* Stardust Burst Effect */
+@keyframes stardust-burst {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(3) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.stardust-burst {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--particle-stardust);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: stardust-burst 0.6s ease-out forwards;
+}
+
+/* ===== FILAMENT PURCHASE EFFECTS ===== */
+
+/* Purchase Success Animation */
+@keyframes purchase-success {
+  0% { transform: scale(1); background: var(--bg-secondary); }
+  25% { transform: scale(1.1); background: rgba(0, 255, 0, 0.2); }
+  50% { transform: scale(1.05); background: rgba(0, 255, 0, 0.1); }
+  100% { transform: scale(1); background: var(--bg-secondary); }
+}
+
+.purchase-success {
+  animation: purchase-success 0.5s var(--animation-easing);
+}
+
+/* Number Increment Effect */
+@keyframes number-increment {
+  0% { 
+    transform: translateY(20px) scale(0.8);
+    opacity: 0;
+    color: var(--accent-green);
+  }
+  50% {
+    transform: translateY(0) scale(1.1);
+    opacity: 1;
+  }
+  100% { 
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    color: var(--text-primary);
+  }
+}
+
+.number-increment {
+  animation: number-increment 0.4s var(--animation-easing-bounce);
+}
+
+/* ===== STARBURST AND RESET EFFECTS ===== */
+
+/* Starburst Preparation Glow */
+@keyframes starburst-ready {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+    border-color: var(--accent-orange);
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(255, 140, 0, 0.8);
+    border-color: var(--accent-yellow);
+  }
+}
+
+.starburst-ready {
+  animation: starburst-ready 2s ease-in-out infinite;
+}
+
+/* Starburst Explosion Effect */
+@keyframes starburst-explosion {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+    background: radial-gradient(circle, var(--accent-yellow) 0%, var(--accent-orange) 50%, transparent 100%);
+  }
+  50% {
+    transform: scale(2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.starburst-explosion {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  animation: starburst-explosion 1s ease-out forwards;
+}
+
+/* ===== STAR PULSATION EFFECTS ===== */
+
+/* Star Expansion State */
+@keyframes star-expansion {
+  0%, 100% { 
+    transform: scale(1);
+    filter: brightness(1) hue-rotate(0deg);
+  }
+  50% { 
+    transform: scale(1.2);
+    filter: brightness(1.3) hue-rotate(30deg);
+  }
+}
+
+.star-expansion {
+  animation: star-expansion 3s ease-in-out infinite;
+}
+
+/* Star Contraction State */
+@keyframes star-contraction {
+  0%, 100% { 
+    transform: scale(1);
+    filter: brightness(1) hue-rotate(0deg);
+  }
+  50% { 
+    transform: scale(0.8);
+    filter: brightness(0.7) hue-rotate(-30deg);
+  }
+}
+
+.star-contraction {
+  animation: star-contraction 2s ease-in-out infinite;
+}
+
+/* Star Stabilization State */
+@keyframes star-stabilization {
+  0%, 100% { 
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  25% { transform: scale(1.02); filter: brightness(1.1); }
+  75% { transform: scale(0.98); filter: brightness(0.9); }
+}
+
+.star-stabilization {
+  animation: star-stabilization 4s ease-in-out infinite;
+}
+
+/* ===== NEBULA GRID EFFECTS ===== */
+
+/* Cell Placement Animation */
+@keyframes cell-place {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3) rotate(-90deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.cell-place {
+  animation: cell-place 0.4s var(--animation-easing-bounce);
+}
+
+/* Pattern Discovery Effect */
+@keyframes pattern-discovery {
+  0% { 
+    background: var(--bg-secondary);
+    transform: scale(1);
+  }
+  25% { 
+    background: rgba(0, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
+  50% { 
+    background: rgba(0, 255, 255, 0.5);
+    transform: scale(1.05);
+  }
+  100% { 
+    background: rgba(0, 255, 255, 0.2);
+    transform: scale(1);
+  }
+}
+
+.pattern-discovery {
+  animation: pattern-discovery 1s var(--animation-easing);
+}
+
+/* ===== CONSTELLATION EFFECTS ===== */
+
+/* Constellation Discovery */
+@keyframes constellation-discovered {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-360deg);
+    filter: brightness(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(-180deg);
+    filter: brightness(2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+}
+
+.constellation-discovered {
+  animation: constellation-discovered 1.5s var(--animation-easing-bounce);
+}
+
+/* Star Connection Lines */
+@keyframes star-connection {
+  0% {
+    stroke-dasharray: 0 1000;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dasharray: 1000 0;
+    opacity: 1;
+  }
+}
+
+.star-connection {
+  animation: star-connection 2s ease-in-out forwards;
+}
+
+/* ===== UPGRADE TREE EFFECTS ===== */
+
+/* Upgrade Unlock Animation */
+@keyframes upgrade-unlock {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+    filter: grayscale(100%);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+    filter: grayscale(50%);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: grayscale(0%);
+  }
+}
+
+.upgrade-unlock {
+  animation: upgrade-unlock 0.8s var(--animation-easing-bounce);
+}
+
+/* Upgrade Purchase Flow */
+@keyframes upgrade-purchase {
+  0% { 
+    background: var(--bg-secondary);
+    border-color: var(--border-primary);
+  }
+  25% { 
+    background: rgba(255, 215, 0, 0.2);
+    border-color: var(--accent-yellow);
+    transform: scale(1.05);
+  }
+  50% { 
+    background: rgba(255, 215, 0, 0.4);
+    transform: scale(1.1);
+  }
+  100% { 
+    background: rgba(255, 215, 0, 0.1);
+    border-color: var(--accent-green);
+    transform: scale(1);
+  }
+}
+
+.upgrade-purchase {
+  animation: upgrade-purchase 0.6s var(--animation-easing);
+}
+
+/* ===== PARTICLE SYSTEMS ===== */
+
+/* Cosmic Energy Particles */
+@keyframes cosmic-particle {
+  0% {
+    transform: translateY(0) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-120px) translateX(var(--random-x, 0)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.cosmic-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--particle-cosmic);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: cosmic-particle 3s ease-out forwards;
+  box-shadow: 0 0 6px var(--particle-cosmic);
+}
+
+/* Energy Flow Lines */
+@keyframes energy-flow {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.energy-flow {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--particle-energy), transparent);
+  animation: energy-flow 2s linear infinite;
+}
+
+/* ===== LOADING AND TRANSITION EFFECTS ===== */
+
+/* Shimmer Loading Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Page Transition */
+@keyframes page-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.5s var(--animation-easing);
+}
+
+/* ===== ACHIEVEMENT AND NOTIFICATION EFFECTS ===== */
+
+/* Achievement Pop */
+@keyframes achievement-pop {
+  0% {
+    transform: scale(0) rotate(-5deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(2deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.achievement-pop {
+  animation: achievement-pop 0.6s var(--animation-easing-bounce);
+}
+
+/* Progress Bar Fill Animation */
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.progress-fill-animated {
+  animation: progress-fill 1s var(--animation-easing);
+}
+
+/* ===== HOVER AND INTERACTION EFFECTS ===== */
+
+/* Button Press Effect */
+.btn-press {
+  transition: all var(--animation-duration-fast) var(--animation-easing);
+}
+
+.btn-press:active {
+  transform: scale(0.95);
+  filter: brightness(0.9);
+}
+
+/* Tab Switch Effect */
+@keyframes tab-switch {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tab-switch {
+  animation: tab-switch var(--animation-duration-normal) var(--animation-easing);
+}
+
+/* ===== RESPONSIVE ANIMATION CONTROLS ===== */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .pulse,
+  .float,
+  .rotate,
+  .rotate-fast {
+    animation: none !important;
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  /* Reduce complex animations on mobile */
+  .cosmic-particle,
+  .stardust-particle {
+    animation-duration: 1s;
+  }
+  
+  .shimmer {
+    animation-duration: 3s;
+  }
+  
+  /* Disable some effects on low-end devices */
+  .energy-flow {
+    display: none;
+  }
+}
+
+/* ===== UTILITY CLASSES FOR DYNAMIC ANIMATIONS ===== */
+
+/* Fade transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--animation-duration-normal);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Slide transitions */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform var(--animation-duration-normal) var(--animation-easing);
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(100%);
+}
+
+/* Scale transitions */
+.scale-enter-active,
+.scale-leave-active {
+  transition: transform var(--animation-duration-normal) var(--animation-easing);
+}
+
+.scale-enter-from,
+.scale-leave-to {
+  transform: scale(0);
+}
+
+/* Bounce entrance */
+.bounce-enter-active {
+  animation: bounce-in 0.5s var(--animation-easing-bounce);
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
