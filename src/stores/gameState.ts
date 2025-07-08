@@ -303,9 +303,20 @@ export const useGameStore = defineStore('game', () => {
     // Apply Nebula pattern bonuses
     const nebulaStore = getNebulaStore()
     if (nebulaStore) {
-      total = total.mul(nebulaStore.totalBonus.production)
-      total = total.mul(nebulaStore.totalBonus.multiplier)
-      }
+      // Apply nebula coordination bonuses
+      nebulaStore.currentBonuses.forEach(bonus => {
+        if (bonus.type === 'production_multiplier' && (bonus.target === 'stardust' || bonus.target === 'all')) {
+          total = total.mul(bonus.scaledValue)
+        }
+      })
+      
+      // Apply nebula coordination penalties
+      nebulaStore.currentPenalties.forEach(penalty => {
+        if (penalty.type === 'production_reduction' && (penalty.target === 'stardust' || penalty.target === 'all')) {
+          total = total.mul(penalty.scaledValue)
+        }
+      })
+    }
       
       return total
     } catch (error) {
@@ -570,11 +581,10 @@ export const useGameStore = defineStore('game', () => {
       automationStore.tick()
     }
     
-      // Update Nebula system (production and expansion)
+      // Update Nebula system (production only - no expansion in new system)
       const nebulaStore = getNebulaStore()
       if (nebulaStore) {
         nebulaStore.tick(deltaTime)
-        nebulaStore.checkExpansion()
       }
     } catch (error) {
       console.error('Error in game tick:', error)
@@ -617,10 +627,22 @@ export const useGameStore = defineStore('game', () => {
     const purchasedForCost = D(Math.floor(filament.purchased.toNumber()))
     let finalCost = filament.baseCost.mul(adjustedCostFactor.pow(purchasedForCost))
     
-    // Apply Nebula Square pattern bonus (cost^0.6 exponent)
+    // Apply Nebula coordination cost bonuses
     const nebulaStore = getNebulaStore()
     if (nebulaStore) {
-      finalCost = finalCost.pow(nebulaStore.totalBonus.costExponent)
+      // Apply cost reduction bonuses
+      nebulaStore.currentBonuses.forEach(bonus => {
+        if (bonus.type === 'cost_reduction' && (bonus.target === 'filaments' || bonus.target === 'all')) {
+          finalCost = finalCost.mul(bonus.scaledValue)
+        }
+      })
+      
+      // Apply cost increase penalties
+      nebulaStore.currentPenalties.forEach(penalty => {
+        if (penalty.type === 'cost_increase' && (penalty.target === 'filaments' || penalty.target === 'all')) {
+          finalCost = finalCost.mul(penalty.scaledValue)
+        }
+      })
     }
     
     // Apply Rail Road constellation cost multiplier effects
@@ -705,10 +727,21 @@ export const useGameStore = defineStore('game', () => {
     
     let starlightGain = ONE // Base gain of 1 Starlight
     
-    // Apply Nebula Cross pattern bonus (x1.75 Starlight gain)
+    // Apply Nebula coordination starlight bonuses
     const nebulaStore = getNebulaStore()
     if (nebulaStore) {
-      starlightGain = starlightGain.mul(nebulaStore.totalBonus.starlightGain)
+      nebulaStore.currentBonuses.forEach(bonus => {
+        if (bonus.type === 'production_multiplier' && (bonus.target === 'starlight' || bonus.target === 'all')) {
+          starlightGain = starlightGain.mul(bonus.scaledValue)
+        }
+      })
+      
+      // Apply starlight penalties
+      nebulaStore.currentPenalties.forEach(penalty => {
+        if (penalty.type === 'production_reduction' && (penalty.target === 'starlight' || penalty.target === 'all')) {
+          starlightGain = starlightGain.mul(penalty.scaledValue)
+        }
+      })
     }
     
     starlight.value.amount = starlight.value.amount.add(starlightGain)
@@ -725,10 +758,8 @@ export const useGameStore = defineStore('game', () => {
       filament.evolution = 0
     })
     
-    // Reset Nebula Store essence to match gameState
-    if (nebulaStore) {
-      nebulaStore.nebularEssence = 0
-    }
+    // Nebular essence reset handled via gameState.nebularEssence
+    nebularEssence.value = 0
     
     // Force reactivity update by triggering changes
     stardust.value.production = stardust.value.production.add(0)
@@ -772,11 +803,8 @@ export const useGameStore = defineStore('game', () => {
         // evolution is retained per design
       })
       
-      // Reset Nebula Store essence to match gameState reset
-      const nebulaStore = getNebulaStore()
-      if (nebulaStore) {
-        nebulaStore.nebularEssence = 0
-      }
+      // Reset nebular essence (handled via gameState.nebularEssence)
+      nebularEssence.value = 0
     }
     
     // Force reactivity update by triggering a change

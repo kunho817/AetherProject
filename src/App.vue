@@ -39,7 +39,7 @@
                 </TabPanel>
                 
                 <TabPanel tabId="nebula" :activeTab="activeTab">
-                  <NebulaGrid />
+                  <NebulaCoordination />
                 </TabPanel>
                 
                 <TabPanel tabId="pulsation" :activeTab="activeTab">
@@ -199,7 +199,7 @@ import TabPanel from '@/components/ui/TabPanel.vue'
 import StarMap from '@/components/game/StarMap.vue'
 import FilamentManager from '@/components/game/FilamentManager.vue'
 import FilamentEvolution from '@/components/game/FilamentEvolution.vue'
-import NebulaGrid from '@/components/game/NebulaGrid.vue'
+import NebulaCoordination from '@/components/game/NebulaCoordination.vue'
 import StarPulsation from '@/components/game/StarPulsation.vue'
 import RailRoadNetwork from '@/components/game/RailRoadNetwork.vue'
 import StarMemory from '@/components/game/StarMemory.vue'
@@ -252,7 +252,7 @@ const glareTabs = computed(() => [
   { id: 'starmap', name: 'Star Map', visible: () => true },
   { id: 'filaments', name: 'Cosmic Filaments', visible: () => true },
   { id: 'evolution', name: 'Evolution', visible: () => gameStore.starlight.amount.gte(5) },
-  { id: 'nebula', name: 'Nebula Grid', visible: () => gameStore.starlight.amount.gte(1) },
+  { id: 'nebula', name: 'Nebula Coordination', visible: () => gameStore.starlight.amount.gte(1) },
   { id: 'pulsation', name: 'Star Pulsation', visible: () => gameStore.starlight.amount.gte(2) },
   { id: 'railroad', name: 'Rail Road', visible: () => gameStore.starlight.amount.gte(8) },
   { id: 'memory', name: 'Star Memory', visible: () => gameStore.starlight.amount.gte(3) },

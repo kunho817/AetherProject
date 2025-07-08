@@ -10,7 +10,6 @@ import type {
   UpgradeMemoryTarget 
 } from '@/types/memory'
 import { useGameStore } from './gameState'
-import { useNebulaStore } from './nebula'
 import { useRailRoadStore } from './railroad'
 
 export const useMemoryStore = defineStore('memory', () => {
@@ -195,12 +194,8 @@ export const useMemoryStore = defineStore('memory', () => {
             
           case 'nebula':
             try {
-              const nebulaStore = useNebulaStore()
-              const nebulaTarget = slot.target as NebulaMemoryTarget
-              if (rate >= 1.0) {
-                // Full preservation - restore exact pattern
-                nebulaStore.restorePattern(nebulaTarget.pattern, nebulaTarget.gridPosition, nebulaTarget.filamentTypes)
-              }
+              // Nebula coordination system doesn't have pattern restoration
+              // This case is kept for backwards compatibility but does nothing
             } catch {
               // Nebula store not available
             }
@@ -247,17 +242,10 @@ export const useMemoryStore = defineStore('memory', () => {
         }
       })
       
-      // Nebula targets (active patterns)
+      // Nebula targets (no longer used in coordination system)
       try {
-        const nebulaStore = useNebulaStore()
-        const activePatternData = nebulaStore.getActivePatternData()
-        activePatternData.forEach(pattern => {
-          if (pattern) {
-            // Convert NebulaType enum to numbers for storage
-            const filamentTypeNumbers = pattern.filamentTypes.map(type => typeof type === 'number' ? type : 0)
-            targets.push(createNebulaTarget(pattern.type, pattern.positions, filamentTypeNumbers))
-          }
-        })
+        // The new nebula coordination system doesn't have patterns to preserve
+        // This section is kept for backwards compatibility but does nothing
       } catch {
         // Nebula store not available yet
       }

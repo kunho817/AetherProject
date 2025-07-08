@@ -26,9 +26,9 @@
           <div class="resource-icon">🚂</div>
         </div>
         <div class="resource-display hover-lift resource-special" v-if="nebularEssence > 0">
-          <div class="resource-label">Nebular Essence</div>
+          <div class="resource-label">Nebula Material</div>
           <div class="resource-value">{{ format(nebularEssence, 1) }}</div>
-          <div class="resource-rate">+{{ format(getEssenceGeneration()) }}/purchase</div>
+          <div class="resource-rate">+{{ format(getMaterialGeneration()) }}/s</div>
           <div class="resource-icon">🌌</div>
         </div>
         <div class="resource-display hover-lift resource-energy" v-if="stellarEnergy > 0">
@@ -121,12 +121,13 @@ function getRailGeneration(): number {
   return Math.max(1, Math.floor(Math.pow(potentialStarlight / 10, 0.5)))
 }
 
-function getEssenceGeneration() {
-  // 0.01% of purchase cost becomes essence
-  const avgCost = gameStore.filaments.reduce((sum, f) => 
-    sum.add(gameStore.getFilamentCost(gameStore.filaments.indexOf(f))), D(0)
-  ).div(gameStore.filaments.length)
-  return avgCost.mul(0.0001)
+function getMaterialGeneration() {
+  // NM production based on filament purchases (0.1% of total filament value per second)
+  const filamentValue = gameStore.filaments.reduce((total, filament, index) => {
+    const cost = gameStore.getFilamentCost(index)
+    return total.add(cost.mul(filament.purchased))
+  }, D(0))
+  return filamentValue.mul(0.001) // 0.1% of filament investment value per second
 }
 
 function getPulsationState(): string {
