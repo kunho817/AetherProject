@@ -5,11 +5,15 @@
     <div class="nebula-stats">
       <div class="stat-item">
         <span>Nebular Essence:</span>
-        <span>{{ nebularEssence }}</span>
+        <span>{{ nebularEssence.toFixed(2) }}</span>
+      </div>
+      <div class="stat-item">
+        <span>Production Rate:</span>
+        <span>{{ essenceProductionRate.toFixed(2) }}/s</span>
       </div>
       <div class="stat-item">
         <span>Placement Cost:</span>
-        <span>{{ format(placementCost) }}</span>
+        <span>{{ placementCost.eq(0) ? 'Free' : format(placementCost) }}</span>
       </div>
       <div class="stat-item">
         <span>Active Patterns:</span>
@@ -23,6 +27,7 @@
           v-for="type in cellTypes"
           :key="type.id"
           :class="['cell-type-btn', { active: selectedType === type.id }]"
+          :title="type.description"
           @click="selectedType = type.id"
         >
           <div class="cell-preview" :style="getCellStyle(type.id)"></div>
@@ -73,6 +78,7 @@
             'can-place': canPlaceHere(x, y)
           }]"
           :style="getCellStyle(cell.type)"
+          :title="getCellTooltip(cell)"
           @click="handleCellClick(x, y)"
           @contextmenu.prevent="handleCellRightClick(x, y)"
         >
@@ -127,7 +133,8 @@ const {
   grid, 
   gridSize, 
   nebularEssence, 
-  placementCost, 
+  placementCost,
+  essenceProductionRate,
   activePatterns, 
   discoveredPatterns 
 } = storeToRefs(nebulaStore)
@@ -136,11 +143,36 @@ const selectedType = ref<NebulaType>(NebulaType.STARDUST)
 const selectedTier = ref<number>(1)
 
 const cellTypes = [
-  { id: NebulaType.STARDUST, name: 'Stardust', color: '#00b4d8' },
-  { id: NebulaType.FILAMENT, name: 'Filament', color: '#06ffa5' },
-  { id: NebulaType.MULTIPLIER, name: 'Multiplier', color: '#7209b7' },
-  { id: NebulaType.SYNERGY, name: 'Synergy', color: '#ff6b35' },
-  { id: NebulaType.CATALYST, name: 'Catalyst', color: '#ffd700' }
+  { 
+    id: NebulaType.STARDUST, 
+    name: 'Stardust', 
+    color: '#00b4d8',
+    description: 'Produces 0.1 essence/s per level. Basic production cell.'
+  },
+  { 
+    id: NebulaType.FILAMENT, 
+    name: 'Filament', 
+    color: '#06ffa5',
+    description: 'Produces 0.2 essence/s per level. Can have specific tiers for patterns.'
+  },
+  { 
+    id: NebulaType.MULTIPLIER, 
+    name: 'Multiplier', 
+    color: '#7209b7',
+    description: 'Produces 0.5 essence/s per level. Enhances adjacent cells.'
+  },
+  { 
+    id: NebulaType.SYNERGY, 
+    name: 'Synergy', 
+    color: '#ff6b35',
+    description: 'Produces 0.3 essence/s per level. Creates pattern bonuses.'
+  },
+  { 
+    id: NebulaType.CATALYST, 
+    name: 'Catalyst', 
+    color: '#ffd700',
+    description: 'Produces 1.0 essence/s per level. Most efficient producer.'
+  }
 ]
 
 const availableFilamentTiers = computed(() => {
@@ -176,6 +208,40 @@ function getCellTypeIcon(type: NebulaType): string {
     case NebulaType.CATALYST: return '⚡'
     default: return '?'
   }
+}
+
+function getCellTooltip(cell: any): string {
+  if (!cell.type) return 'Click to place a cell'
+  
+  const typeInfo = cellTypes.find(t => t.id === cell.type)
+  if (!typeInfo) return ''
+  
+  let tooltip = `${typeInfo.name} (Level ${cell.level})\n`
+  tooltip += `Production: ${(cell.level * getProductionRate(cell.type)).toFixed(2)} essence/s\n`
+  
+  if (cell.type === NebulaType.FILAMENT && cell.tier) {
+    tooltip += `Tier ${cell.tier} Filament\n`
+  }
+  
+  tooltip += `Left-click: Upgrade (Cost: ${getUpgradeCost(cell.level).toFixed(0)})\n`
+  tooltip += `Right-click: Remove (Refund: ${(placementCost.value.div(2).toNumber()).toFixed(0)})`
+  
+  return tooltip
+}
+
+function getProductionRate(type: NebulaType): number {
+  switch (type) {
+    case NebulaType.STARDUST: return 0.1
+    case NebulaType.FILAMENT: return 0.2
+    case NebulaType.MULTIPLIER: return 0.5
+    case NebulaType.SYNERGY: return 0.3
+    case NebulaType.CATALYST: return 1.0
+    default: return 0
+  }
+}
+
+function getUpgradeCost(level: number): number {
+  return 50 * Math.pow(2, level - 1)
 }
 
 function canPlaceHere(x: number, y: number): boolean {
@@ -326,10 +392,10 @@ gameStore.$subscribe((mutation, state) => {
 
 .nebula-grid {
   display: grid;
-  gap: 2px;
-  max-width: 500px;
+  gap: 3px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 10px;
+  padding: 15px;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
 }

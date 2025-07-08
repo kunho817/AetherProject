@@ -570,9 +570,10 @@ export const useGameStore = defineStore('game', () => {
       automationStore.tick()
     }
     
-      // Check Nebula expansion conditions
+      // Update Nebula system (production and expansion)
       const nebulaStore = getNebulaStore()
       if (nebulaStore) {
+        nebulaStore.tick(deltaTime)
         nebulaStore.checkExpansion()
       }
     } catch (error) {
@@ -678,11 +679,7 @@ export const useGameStore = defineStore('game', () => {
       }
     }
     
-    // Generate Nebular Essence: 0.01% of total purchase cost
-    if (totalCost.gt(0)) {
-      const essenceGain = totalCost.mul(0.0001) // 0.01% = 0.0001
-      nebularEssence.value += essenceGain.toNumber()
-    }
+    // Nebula Essence production removed - now produced by Nebula Grid cells
     
     // Track achievements and statistics
     if (bought > 0) {

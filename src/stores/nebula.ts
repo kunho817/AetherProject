@@ -6,12 +6,15 @@ import { NebulaType as NT } from '@/types/nebula'
 import { useGameStore } from './gameState'
 
 export const useNebulaStore = defineStore('nebula', () => {
+  const gameStore = useGameStore()
+  
   // Grid state
   const gridSize = ref(3) // Start with 3x3 as per Concept.md
   const gridWidth = ref(3) // Track width separately for 4x3 expansion
   const gridHeight = ref(3) // Track height separately
   const grid = ref<NebulaCell[][]>([])
-  const nebularEssence = ref(0)
+  // Use gameStore's nebularEssence for proper sync
+  const nebularEssence = computed(() => gameStore.nebularEssence)
   const basePlacementCost = ref(D(10))
   
   // Patterns
@@ -182,11 +185,54 @@ export const useNebulaStore = defineStore('nebula', () => {
   // Computed values
   const placementCost = computed(() => {
     const placedCells = grid.value.flat().filter(cell => cell.type !== null).length
-    return basePlacementCost.value.mul(D(1.5).pow(placedCells))
+    // First cell is free
+    if (placedCells === 0) {
+      return D(0)
+    }
+    // After first cell, cost starts at base (10) and scales with 1.5x per cell
+    return basePlacementCost.value.mul(D(1.5).pow(placedCells - 1))
   })
   
   const discoveredPatterns = computed(() => {
     return patterns.value.filter(p => p.discovered)
+  })
+  
+  // Calculate current essence production rate
+  const essenceProductionRate = computed(() => {
+    let production = 0
+    
+    grid.value.forEach(row => {
+      row.forEach(cell => {
+        if (cell.type !== null && cell.active) {
+          // Base production per cell type
+          let cellProduction = 0
+          
+          switch (cell.type) {
+            case NT.STARDUST:
+              cellProduction = 0.1 * cell.level
+              break
+            case NT.FILAMENT:
+              cellProduction = 0.2 * cell.level
+              break
+            case NT.MULTIPLIER:
+              cellProduction = 0.5 * cell.level
+              break
+            case NT.SYNERGY:
+              cellProduction = 0.3 * cell.level
+              break
+            case NT.CATALYST:
+              cellProduction = 1.0 * cell.level
+              break
+          }
+          
+          production += cellProduction
+        }
+      })
+    })
+    
+    // Apply pattern bonuses
+    const bonus = getEssenceProductionBonus()
+    return production * bonus
   })
   
   const totalBonus = computed(() => {
@@ -259,7 +305,11 @@ export const useNebulaStore = defineStore('nebula', () => {
       tier: type === NT.FILAMENT ? tier : undefined
     }
     
-    nebularEssence.value -= placementCost.value.toNumber()
+    // Only subtract cost if it's greater than 0
+    const cost = placementCost.value.toNumber()
+    if (cost > 0) {
+      gameStore.nebularEssence -= cost
+    }
     checkPatterns()
     return true
   }
@@ -270,7 +320,7 @@ export const useNebulaStore = defineStore('nebula', () => {
     
     // Refund 50% of placement cost
     const refund = placementCost.value.div(2).floor()
-    nebularEssence.value += refund.toNumber()
+    gameStore.nebularEssence += refund.toNumber()
     
     grid.value[y][x] = {
       x,
@@ -294,7 +344,7 @@ export const useNebulaStore = defineStore('nebula', () => {
     const upgradeCost = basePlacementCost.value.mul(D(2).pow(cell.level))
     if (nebularEssence.value < upgradeCost.toNumber()) return false
     
-    nebularEssence.value -= upgradeCost.toNumber()
+    gameStore.nebularEssence -= upgradeCost.toNumber()
     cell.level++
     
     return true
@@ -417,7 +467,7 @@ export const useNebulaStore = defineStore('nebula', () => {
   }
   
   function reset() {
-    nebularEssence.value = 0
+    gameStore.nebularEssence = 0
     gridSize.value = 3 // Reset to initial 3x3 size
     gridWidth.value = 3
     gridHeight.value = 3
@@ -501,7 +551,7 @@ export const useNebulaStore = defineStore('nebula', () => {
     const saveData = {
       // Basic state
       gridSize: gridSize.value,
-      nebularEssence: nebularEssence.value,
+      // nebularEssence is now stored in gameStore
       basePlacementCost: basePlacementCost.value.toString(),
       
       // Grid state (cells with their types, levels, and tiers)
@@ -535,7 +585,7 @@ export const useNebulaStore = defineStore('nebula', () => {
     try {
       // Load basic state
       gridSize.value = saveData.gridSize || 5
-      nebularEssence.value = saveData.nebularEssence || 0
+      // nebularEssence is loaded from gameStore
       basePlacementCost.value = D(saveData.basePlacementCost || 10)
       
       // Load grid state
@@ -603,6 +653,63 @@ export const useNebulaStore = defineStore('nebula', () => {
     expandGrid() // Will automatically check conditions and expand if eligible
   }
   
+  // Production system - called by game loop
+  function tick(deltaTime: number) {
+    // Calculate Nebula Essence production from grid cells
+    let essenceProduction = 0
+    
+    grid.value.forEach(row => {
+      row.forEach(cell => {
+        if (cell.type !== null && cell.active) {
+          // Base production per cell type
+          let cellProduction = 0
+          
+          switch (cell.type) {
+            case NT.STARDUST:
+              cellProduction = 0.1 * cell.level // 0.1 essence/sec per level
+              break
+            case NT.FILAMENT:
+              cellProduction = 0.2 * cell.level // 0.2 essence/sec per level
+              break
+            case NT.MULTIPLIER:
+              cellProduction = 0.5 * cell.level // 0.5 essence/sec per level
+              break
+            case NT.SYNERGY:
+              cellProduction = 0.3 * cell.level // 0.3 essence/sec per level
+              break
+            case NT.CATALYST:
+              cellProduction = 1.0 * cell.level // 1.0 essence/sec per level
+              break
+          }
+          
+          essenceProduction += cellProduction
+        }
+      })
+    })
+    
+    // Apply pattern bonuses to essence production
+    const essenceBonus = getEssenceProductionBonus()
+    essenceProduction *= essenceBonus
+    
+    // Add production to nebular essence
+    gameStore.nebularEssence += essenceProduction * deltaTime
+  }
+  
+  // Calculate essence production bonus from patterns
+  function getEssenceProductionBonus(): number {
+    let bonus = 1
+    
+    // Apply bonuses from active patterns that affect essence production
+    activePatterns.value.forEach(patternId => {
+      const pattern = patterns.value.find(p => p.id === patternId)
+      if (pattern && pattern.bonus.type === 'production' && pattern.bonus.target === 'all') {
+        bonus *= pattern.bonus.value.toNumber()
+      }
+    })
+    
+    return bonus
+  }
+  
   // Initialize on store creation
   initializeGrid()
   
@@ -619,6 +726,7 @@ export const useNebulaStore = defineStore('nebula', () => {
     // Computed
     placementCost,
     discoveredPatterns,
+    essenceProductionRate,
     totalBonus,
     
     // Actions
@@ -629,6 +737,7 @@ export const useNebulaStore = defineStore('nebula', () => {
     expandGrid,
     checkExpansion,
     checkPatterns,
+    tick,
     reset,
     softReset,
     
