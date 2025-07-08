@@ -1,0 +1,69 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="stellarNurseryGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#ff6b6b" stop-opacity="0.9"/>
+      <stop offset="20%" stop-color="#ff8e8e" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#ffb3b3" stop-opacity="0.6"/>
+      <stop offset="70%" stop-color="#ffd6d6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffe6e6" stop-opacity="0.1"/>
+    </radialGradient>
+    
+    <radialGradient id="stellarCore" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="30%" stop-color="#ffdddd" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ff6b6b" stop-opacity="0.3"/>
+    </radialGradient>
+    
+    <filter id="stellarGlow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <circle id="star" r="1" fill="#ffffff" opacity="0.8"/>
+    <circle id="protostar" r="1.5" fill="#ff6b6b" opacity="0.6"/>
+  </defs>
+  
+  <!-- Main nebula cloud -->
+  <ellipse cx="200" cy="150" rx="180" ry="120" fill="url(#stellarNurseryGradient)" filter="url(#stellarGlow)"/>
+  
+  <!-- Dense stellar formation regions -->
+  <ellipse cx="150" cy="100" rx="40" ry="25" fill="url(#stellarCore)" opacity="0.7"/>
+  <ellipse cx="250" cy="180" rx="35" ry="30" fill="url(#stellarCore)" opacity="0.6"/>
+  <ellipse cx="200" cy="120" rx="30" ry="20" fill="url(#stellarCore)" opacity="0.8"/>
+  
+  <!-- Forming stars -->
+  <g opacity="0.9">
+    <use href="#star" x="140" y="95"/>
+    <use href="#star" x="155" y="105"/>
+    <use href="#star" x="165" y="100"/>
+    <use href="#protostar" x="245" y="175"/>
+    <use href="#protostar" x="255" y="185"/>
+    <use href="#star" x="195" y="115"/>
+    <use href="#star" x="205" y="125"/>
+  </g>
+  
+  <!-- Hydrogen-rich filaments -->
+  <path d="M 80 120 Q 150 80 220 140 Q 280 200 320 180" 
+        stroke="#ff9999" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M 70 200 Q 120 150 180 170 Q 240 190 300 160" 
+        stroke="#ff9999" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <path d="M 100 80 Q 160 120 200 100 Q 250 80 290 110" 
+        stroke="#ff9999" stroke-width="1.8" fill="none" opacity="0.7"/>
+  
+  <!-- Stellar winds -->
+  <g opacity="0.4">
+    <path d="M 200 150 L 190 140" stroke="#ffffff" stroke-width="1"/>
+    <path d="M 200 150 L 210 140" stroke="#ffffff" stroke-width="1"/>
+    <path d="M 200 150 L 205 160" stroke="#ffffff" stroke-width="1"/>
+    <path d="M 200 150 L 195 160" stroke="#ffffff" stroke-width="1"/>
+  </g>
+  
+  <!-- Dust lanes -->
+  <path d="M 50 180 Q 100 160 150 180 Q 200 200 250 190 Q 300 180 350 200" 
+        stroke="#cc5555" stroke-width="3" fill="none" opacity="0.3"/>
+  <path d="M 40 100 Q 80 120 120 100 Q 160 80 200 100" 
+        stroke="#cc5555" stroke-width="2.5" fill="none" opacity="0.25"/>
+</svg>

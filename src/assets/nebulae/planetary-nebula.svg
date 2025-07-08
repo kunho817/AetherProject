@@ -1,0 +1,77 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="planetaryGradient" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#4ecdc4" stop-opacity="0.9"/>
+      <stop offset="25%" stop-color="#70d4cd" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#92dbd6" stop-opacity="0.5"/>
+      <stop offset="75%" stop-color="#b4e2df" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#d6f0ed" stop-opacity="0.1"/>
+    </radialGradient>
+    
+    <radialGradient id="centralStar" cx="50%" cy="50%" r="30%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#e6fffe" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#4ecdc4" stop-opacity="0.4"/>
+    </radialGradient>
+    
+    <linearGradient id="shellGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ecdc4" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#70d4cd" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#92dbd6" stop-opacity="0.4"/>
+    </linearGradient>
+    
+    <filter id="planetaryGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Outer shell -->
+  <ellipse cx="200" cy="150" rx="160" ry="100" fill="url(#planetaryGradient)" filter="url(#planetaryGlow)"/>
+  
+  <!-- Inner shell structure -->
+  <ellipse cx="200" cy="150" rx="120" ry="80" fill="none" stroke="url(#shellGradient)" stroke-width="2" opacity="0.8"/>
+  <ellipse cx="200" cy="150" rx="90" ry="60" fill="none" stroke="url(#shellGradient)" stroke-width="1.5" opacity="0.6"/>
+  
+  <!-- Symmetrical knots -->
+  <ellipse cx="150" cy="120" rx="15" ry="8" fill="#4ecdc4" opacity="0.7" transform="rotate(-30 150 120)"/>
+  <ellipse cx="250" cy="180" rx="15" ry="8" fill="#4ecdc4" opacity="0.7" transform="rotate(30 250 180)"/>
+  <ellipse cx="250" cy="120" rx="15" ry="8" fill="#4ecdc4" opacity="0.7" transform="rotate(30 250 120)"/>
+  <ellipse cx="150" cy="180" rx="15" ry="8" fill="#4ecdc4" opacity="0.7" transform="rotate(-30 150 180)"/>
+  
+  <!-- Bipolar jets -->
+  <path d="M 200 150 L 200 50" stroke="#70d4cd" stroke-width="3" opacity="0.6"/>
+  <path d="M 200 150 L 200 250" stroke="#70d4cd" stroke-width="3" opacity="0.6"/>
+  <path d="M 195 60 L 205 60 L 200 50 Z" fill="#70d4cd" opacity="0.6"/>
+  <path d="M 195 240 L 205 240 L 200 250 Z" fill="#70d4cd" opacity="0.6"/>
+  
+  <!-- Central white dwarf -->
+  <circle cx="200" cy="150" r="8" fill="url(#centralStar)" filter="url(#planetaryGlow)"/>
+  
+  <!-- Helium and carbon enriched regions -->
+  <g opacity="0.4">
+    <circle cx="180" cy="130" r="5" fill="#92dbd6"/>
+    <circle cx="220" cy="170" r="6" fill="#92dbd6"/>
+    <circle cx="170" cy="170" r="4" fill="#92dbd6"/>
+    <circle cx="230" cy="130" r="5" fill="#92dbd6"/>
+  </g>
+  
+  <!-- Ionization fronts -->
+  <path d="M 120 150 Q 160 120 200 150 Q 240 180 280 150" 
+        stroke="#4ecdc4" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M 130 180 Q 165 160 200 180 Q 235 200 270 180" 
+        stroke="#4ecdc4" stroke-width="1" fill="none" opacity="0.4"/>
+  <path d="M 130 120 Q 165 140 200 120 Q 235 100 270 120" 
+        stroke="#4ecdc4" stroke-width="1" fill="none" opacity="0.4"/>
+  
+  <!-- Stellar material ejection patterns -->
+  <g opacity="0.3">
+    <circle cx="160" cy="110" r="2" fill="#ffffff"/>
+    <circle cx="240" cy="190" r="2" fill="#ffffff"/>
+    <circle cx="160" cy="190" r="2" fill="#ffffff"/>
+    <circle cx="240" cy="110" r="2" fill="#ffffff"/>
+  </g>
+</svg>

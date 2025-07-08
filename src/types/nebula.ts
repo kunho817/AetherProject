@@ -22,11 +22,19 @@ export enum NebulaType {
   ABSORPTION_NEBULA = 'absorption_nebula'
 }
 
-// Component investment data
-export interface ComponentInvestment {
+// Interstellar Agglomerator - single element that aggregates all components
+export interface InterstellarAgglomerator {
+  totalInvestedNM: Decimal // Total NM invested in the agglomerator
+  level: number // Agglomerator level (affects efficiency)
+  efficiency: number // Efficiency multiplier for component allocation
+}
+
+// Component allocation data - how NM is allocated to each component
+export interface ComponentAllocation {
   component: NebulaComponent
-  invested: Decimal // Total NM invested
-  proportion: number // Current proportion in nebula (0-100%)
+  allocatedNM: Decimal // NM allocated to this component from the agglomerator
+  proportion: number // Current proportion in nebula (0-100%) based on allocation
+  isPerfect: boolean // Whether this component is at its perfect ratio
 }
 
 // Nebula configuration for different types
@@ -34,6 +42,8 @@ export interface NebulaConfiguration {
   type: NebulaType
   name: string
   description: string
+  centralComponent: NebulaComponent // The main component for this nebula
+  perfectRatios: { component: NebulaComponent; ratio: number }[] // Perfect ratios for all components
   requirements: { component: NebulaComponent; minPercent: number; maxPercent: number }[]
   bonuses: NebulaBonus[]
   penalties: NebulaPenalty[]
@@ -60,8 +70,9 @@ export interface NebulaPenalty {
 export interface NebulaState {
   nebulaMaterial: Decimal // Renamed from nebularEssence
   materialProductionRate: Decimal // NM production from filaments
-  components: ComponentInvestment[]
+  agglomerator: InterstellarAgglomerator // Single agglomerator for all components
+  componentAllocations: ComponentAllocation[] // How NM is allocated to components
   activeNebula: NebulaType | null
   discoveredNebulae: NebulaType[]
-  totalInvestment: Decimal // Total NM invested across all components
+  totalInvestment: Decimal // Total NM invested in the agglomerator
 }

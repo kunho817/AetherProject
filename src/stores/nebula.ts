@@ -2,8 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { D, ZERO } from '@/utils/decimal'
 import type { 
-  ComponentInvestment, 
-  NebulaConfiguration
+  ComponentAllocation, 
+  NebulaConfiguration,
+  InterstellarAgglomerator
 } from '@/types/nebula'
 import { NebulaComponent, NebulaType } from '@/types/nebula'
 import { useGameStore } from './gameState'
@@ -14,15 +15,22 @@ export const useNebulaStore = defineStore('nebula', () => {
   // Nebula Material (renamed from essence) - produced by filament purchases
   const nebulaMaterial = computed(() => gameStore.nebularEssence) // Will rename in gameStore later
   
-  // Component investments
-  const components = ref<ComponentInvestment[]>([
-    { component: NebulaComponent.HYDROGEN, invested: ZERO, proportion: 0 },
-    { component: NebulaComponent.HELIUM, invested: ZERO, proportion: 0 },
-    { component: NebulaComponent.CARBON, invested: ZERO, proportion: 0 },
-    { component: NebulaComponent.NITROGEN, invested: ZERO, proportion: 0 },
-    { component: NebulaComponent.OXYGEN, invested: ZERO, proportion: 0 },
-    { component: NebulaComponent.SILICON, invested: ZERO, proportion: 0 },
-    { component: NebulaComponent.IRON, invested: ZERO, proportion: 0 }
+  // Single Interstellar Agglomerator - aggregates all components
+  const agglomerator = ref<InterstellarAgglomerator>({
+    totalInvestedNM: ZERO,
+    level: 1,
+    efficiency: 1.0
+  })
+  
+  // Component allocations - how NM is allocated to each component from the agglomerator
+  const componentAllocations = ref<ComponentAllocation[]>([
+    { component: NebulaComponent.HYDROGEN, allocatedNM: ZERO, proportion: 0, isPerfect: false },
+    { component: NebulaComponent.HELIUM, allocatedNM: ZERO, proportion: 0, isPerfect: false },
+    { component: NebulaComponent.CARBON, allocatedNM: ZERO, proportion: 0, isPerfect: false },
+    { component: NebulaComponent.NITROGEN, allocatedNM: ZERO, proportion: 0, isPerfect: false },
+    { component: NebulaComponent.OXYGEN, allocatedNM: ZERO, proportion: 0, isPerfect: false },
+    { component: NebulaComponent.SILICON, allocatedNM: ZERO, proportion: 0, isPerfect: false },
+    { component: NebulaComponent.IRON, allocatedNM: ZERO, proportion: 0, isPerfect: false }
   ])
   
   // Nebula state
@@ -35,6 +43,16 @@ export const useNebulaStore = defineStore('nebula', () => {
       type: NebulaType.STELLAR_NURSERY,
       name: 'Stellar Nursery',
       description: 'A birthplace of stars, rich in hydrogen and helium. Massively boosts star formation.',
+      centralComponent: NebulaComponent.HYDROGEN,
+      perfectRatios: [
+        { component: NebulaComponent.HYDROGEN, ratio: 70 },
+        { component: NebulaComponent.HELIUM, ratio: 22 },
+        { component: NebulaComponent.CARBON, ratio: 3 },
+        { component: NebulaComponent.NITROGEN, ratio: 2 },
+        { component: NebulaComponent.OXYGEN, ratio: 2 },
+        { component: NebulaComponent.SILICON, ratio: 0.5 },
+        { component: NebulaComponent.IRON, ratio: 0.5 }
+      ],
       requirements: [
         { component: NebulaComponent.HYDROGEN, minPercent: 60, maxPercent: 80 },
         { component: NebulaComponent.HELIUM, minPercent: 15, maxPercent: 30 }
@@ -52,6 +70,16 @@ export const useNebulaStore = defineStore('nebula', () => {
       type: NebulaType.PLANETARY_NEBULA,
       name: 'Planetary Nebula', 
       description: 'Expelled stellar material creating beautiful symmetric structures. Enhances precision operations.',
+      centralComponent: NebulaComponent.HELIUM,
+      perfectRatios: [
+        { component: NebulaComponent.HYDROGEN, ratio: 25 },
+        { component: NebulaComponent.HELIUM, ratio: 50 },
+        { component: NebulaComponent.CARBON, ratio: 12 },
+        { component: NebulaComponent.NITROGEN, ratio: 5 },
+        { component: NebulaComponent.OXYGEN, ratio: 6 },
+        { component: NebulaComponent.SILICON, ratio: 1 },
+        { component: NebulaComponent.IRON, ratio: 1 }
+      ],
       requirements: [
         { component: NebulaComponent.HELIUM, minPercent: 40, maxPercent: 60 },
         { component: NebulaComponent.CARBON, minPercent: 20, maxPercent: 35 },
@@ -70,6 +98,16 @@ export const useNebulaStore = defineStore('nebula', () => {
       type: NebulaType.SUPERNOVA_REMNANT,
       name: 'Supernova Remnant',
       description: 'The explosive aftermath of stellar death. Extreme energy but chaotic and destructive.',
+      centralComponent: NebulaComponent.IRON,
+      perfectRatios: [
+        { component: NebulaComponent.HYDROGEN, ratio: 15 },
+        { component: NebulaComponent.HELIUM, ratio: 10 },
+        { component: NebulaComponent.CARBON, ratio: 8 },
+        { component: NebulaComponent.NITROGEN, ratio: 7 },
+        { component: NebulaComponent.OXYGEN, ratio: 20 },
+        { component: NebulaComponent.SILICON, ratio: 15 },
+        { component: NebulaComponent.IRON, ratio: 25 }
+      ],
       requirements: [
         { component: NebulaComponent.IRON, minPercent: 30, maxPercent: 50 },
         { component: NebulaComponent.SILICON, minPercent: 20, maxPercent: 35 },
@@ -88,6 +126,16 @@ export const useNebulaStore = defineStore('nebula', () => {
       type: NebulaType.DARK_NEBULA,
       name: 'Dark Nebula',
       description: 'Dense clouds that block starlight. Mysterious and provides unique enhancement paths.',
+      centralComponent: NebulaComponent.CARBON,
+      perfectRatios: [
+        { component: NebulaComponent.HYDROGEN, ratio: 10 },
+        { component: NebulaComponent.HELIUM, ratio: 5 },
+        { component: NebulaComponent.CARBON, ratio: 60 },
+        { component: NebulaComponent.NITROGEN, ratio: 8 },
+        { component: NebulaComponent.OXYGEN, ratio: 5 },
+        { component: NebulaComponent.SILICON, ratio: 10 },
+        { component: NebulaComponent.IRON, ratio: 2 }
+      ],
       requirements: [
         { component: NebulaComponent.CARBON, minPercent: 50, maxPercent: 70 },
         { component: NebulaComponent.SILICON, minPercent: 20, maxPercent: 40 }
@@ -106,6 +154,16 @@ export const useNebulaStore = defineStore('nebula', () => {
       type: NebulaType.REFLECTION_NEBULA,
       name: 'Reflection Nebula',
       description: 'Reflects light from nearby stars. Provides balanced enhancements with minimal penalties.',
+      centralComponent: NebulaComponent.HYDROGEN,
+      perfectRatios: [
+        { component: NebulaComponent.HYDROGEN, ratio: 40 },
+        { component: NebulaComponent.HELIUM, ratio: 30 },
+        { component: NebulaComponent.CARBON, ratio: 20 },
+        { component: NebulaComponent.NITROGEN, ratio: 4 },
+        { component: NebulaComponent.OXYGEN, ratio: 3 },
+        { component: NebulaComponent.SILICON, ratio: 2 },
+        { component: NebulaComponent.IRON, ratio: 1 }
+      ],
       requirements: [
         { component: NebulaComponent.HYDROGEN, minPercent: 30, maxPercent: 50 },
         { component: NebulaComponent.HELIUM, minPercent: 20, maxPercent: 40 },
@@ -122,6 +180,16 @@ export const useNebulaStore = defineStore('nebula', () => {
       type: NebulaType.EMISSION_NEBULA,
       name: 'Emission Nebula',
       description: 'Glowing clouds of ionized gas. Provides extreme starlight production.',
+      centralComponent: NebulaComponent.HYDROGEN,
+      perfectRatios: [
+        { component: NebulaComponent.HYDROGEN, ratio: 80 },
+        { component: NebulaComponent.HELIUM, ratio: 8 },
+        { component: NebulaComponent.CARBON, ratio: 3 },
+        { component: NebulaComponent.NITROGEN, ratio: 2 },
+        { component: NebulaComponent.OXYGEN, ratio: 5 },
+        { component: NebulaComponent.SILICON, ratio: 1 },
+        { component: NebulaComponent.IRON, ratio: 1 }
+      ],
       requirements: [
         { component: NebulaComponent.HYDROGEN, minPercent: 70, maxPercent: 90 },
         { component: NebulaComponent.OXYGEN, minPercent: 5, maxPercent: 20 }
@@ -139,6 +207,16 @@ export const useNebulaStore = defineStore('nebula', () => {
       type: NebulaType.ABSORPTION_NEBULA,
       name: 'Absorption Nebula',
       description: 'Dense material that absorbs specific wavelengths. Specialized for advanced operations.',
+      centralComponent: NebulaComponent.NITROGEN,
+      perfectRatios: [
+        { component: NebulaComponent.HYDROGEN, ratio: 15 },
+        { component: NebulaComponent.HELIUM, ratio: 10 },
+        { component: NebulaComponent.CARBON, ratio: 20 },
+        { component: NebulaComponent.NITROGEN, ratio: 35 },
+        { component: NebulaComponent.OXYGEN, ratio: 8 },
+        { component: NebulaComponent.SILICON, ratio: 7 },
+        { component: NebulaComponent.IRON, ratio: 5 }
+      ],
       requirements: [
         { component: NebulaComponent.NITROGEN, minPercent: 40, maxPercent: 60 },
         { component: NebulaComponent.CARBON, minPercent: 25, maxPercent: 45 },
@@ -157,7 +235,15 @@ export const useNebulaStore = defineStore('nebula', () => {
   
   // Computed values
   const totalInvestment = computed(() => {
-    return components.value.reduce((total, comp) => total.add(comp.invested), ZERO)
+    return agglomerator.value.totalInvestedNM
+  })
+  
+  const totalAllocated = computed(() => {
+    return componentAllocations.value.reduce((total, comp) => total.add(comp.allocatedNM), ZERO)
+  })
+  
+  const availableAllocation = computed(() => {
+    return agglomerator.value.totalInvestedNM.sub(totalAllocated.value)
   })
   
   const materialProductionRate = computed(() => {
@@ -169,39 +255,96 @@ export const useNebulaStore = defineStore('nebula', () => {
     return filamentValue.mul(0.001) // 0.1% of filament investment value
   })
   
-  // Component investment functions
-  function canInvestInComponent(_component: NebulaComponent, amount: number): boolean {
-    return nebulaMaterial.value >= amount
+  // Invest NM into the agglomerator
+  function investInAgglomerator(amount: number): boolean {
+    if (gameStore.nebularEssence < amount) {
+      return false
+    }
+    
+    // Update investment and NM
+    agglomerator.value.totalInvestedNM = agglomerator.value.totalInvestedNM.add(amount)
+    gameStore.nebularEssence -= amount
+    
+    return true
   }
   
-  function investInComponent(component: NebulaComponent, amount: number): boolean {
-    if (!canInvestInComponent(component, amount)) return false
+  // Allocate NM from agglomerator to a specific component
+  function allocateToComponent(component: NebulaComponent, amount: number): boolean {
+    const allocation = componentAllocations.value.find(a => a.component === component)
+    if (!allocation) return false
     
-    const componentData = components.value.find(c => c.component === component)
-    if (!componentData) return false
+    const currentAllocation = allocation.allocatedNM.toNumber()
+    const difference = amount - currentAllocation
     
-    // Deduct NM and add to investment
-    gameStore.nebularEssence -= amount
-    componentData.invested = componentData.invested.add(amount)
+    // Check if we have enough available allocation
+    if (difference > 0 && availableAllocation.value.lt(difference)) {
+      return false
+    }
     
-    // Recalculate proportions
+    // Update allocation
+    allocation.allocatedNM = D(amount)
+    
+    // Recalculate proportions and perfect ratios
     calculateProportions()
-    
-    // Check for new nebula formation
+    checkPerfectRatios()
     checkNebulaFormation()
     
     return true
   }
   
+  // Component investment functions
+  function canInvestInComponent(_component: NebulaComponent, amount: number): boolean {
+    return nebulaMaterial.value >= amount
+  }
+  
+  // Helper function to check if we can allocate amount to component
+  function canAllocateToComponent(component: NebulaComponent, amount: number): boolean {
+    const allocation = componentAllocations.value.find(a => a.component === component)
+    if (!allocation) return false
+    
+    const currentAllocation = allocation.allocatedNM.toNumber()
+    const difference = amount - currentAllocation
+    
+    return difference <= 0 || availableAllocation.value.gte(difference)
+  }
+  
   function calculateProportions() {
-    const total = totalInvestment.value
-    if (total.eq(0)) {
-      components.value.forEach(comp => comp.proportion = 0)
+    // Calculate total effective allocation across all components
+    const totalEffectiveAllocation = componentAllocations.value.reduce((total, comp) => {
+      return total.add(comp.allocatedNM.mul(agglomerator.value.efficiency))
+    }, ZERO)
+    
+    if (totalEffectiveAllocation.eq(0)) {
+      componentAllocations.value.forEach(comp => {
+        comp.proportion = 0
+        comp.isPerfect = false
+      })
       return
     }
     
-    components.value.forEach(comp => {
-      comp.proportion = comp.invested.div(total).mul(100).toNumber()
+    componentAllocations.value.forEach(comp => {
+      // Calculate proportion based on component allocation * efficiency
+      const effectiveAllocation = comp.allocatedNM.mul(agglomerator.value.efficiency)
+      comp.proportion = effectiveAllocation.div(totalEffectiveAllocation).mul(100).toNumber()
+    })
+  }
+  
+  function checkPerfectRatios() {
+    if (!activeNebula.value) return
+    
+    const config = nebulaConfigurations.value.find(c => c.type === activeNebula.value)
+    if (!config) return
+    
+    const tolerance = 0.5 // ±0.5% tolerance for perfect ratios
+    
+    componentAllocations.value.forEach(comp => {
+      const perfectRatio = config.perfectRatios.find(r => r.component === comp.component)
+      if (perfectRatio) {
+        const diff = Math.abs(comp.proportion - perfectRatio.ratio)
+        comp.isPerfect = diff <= tolerance
+      } else {
+        comp.isPerfect = false
+      }
     })
   }
   
@@ -211,7 +354,7 @@ export const useNebulaStore = defineStore('nebula', () => {
       if (config.discovered) continue
       
       const meetsRequirements = config.requirements.every(req => {
-        const component = components.value.find(c => c.component === req.component)
+        const component = componentAllocations.value.find(c => c.component === req.component)
         if (!component) return false
         
         return component.proportion >= req.minPercent && component.proportion <= req.maxPercent
@@ -253,9 +396,16 @@ export const useNebulaStore = defineStore('nebula', () => {
     // Apply logarithmic scaling based on total investment
     const investmentMultiplier = Math.log10(Math.max(10, totalInvestment.value.toNumber())) / Math.log10(10)
     
+    // Calculate perfect ratio bonuses
+    const centralComponent = componentAllocations.value.find(c => c.component === config.centralComponent)
+    const centralPerfectMultiplier = centralComponent?.isPerfect ? 3.0 : 1.0 // 3x bonus for perfect central
+    
+    const perfectComponents = componentAllocations.value.filter(c => c.isPerfect).length
+    const perfectBonusMultiplier = 1 + (perfectComponents * 0.2) // +20% per perfect component
+    
     return config.bonuses.map(bonus => ({
       ...bonus,
-      scaledValue: bonus.baseValue * investmentMultiplier
+      scaledValue: bonus.baseValue * investmentMultiplier * centralPerfectMultiplier * perfectBonusMultiplier
     }))
   })
   
@@ -265,30 +415,73 @@ export const useNebulaStore = defineStore('nebula', () => {
     const config = nebulaConfigurations.value.find(c => c.type === activeNebula.value)
     if (!config) return []
     
-    // Penalties are not scaled with investment (they remain constant)
+    // Perfect ratios reduce penalties
+    const perfectComponents = componentAllocations.value.filter(c => c.isPerfect).length
+    const penaltyReduction = 1 - (perfectComponents * 0.1) // -10% penalty per perfect component
+    
     return config.penalties.map(penalty => ({
       ...penalty,
-      scaledValue: penalty.baseValue
+      scaledValue: penalty.baseValue * Math.max(0.2, penaltyReduction) // Minimum 20% of original penalty
     }))
   })
   
-  // Get component investment cost (increases exponentially)
-  function getInvestmentCost(component: NebulaComponent, amount = 1): number {
-    const componentData = components.value.find(c => c.component === component)
-    if (!componentData) return 1
-    
+  // Get agglomerator investment cost (increases exponentially)
+  function getInvestmentCost(amount = 1): number {
     const baseCost = 10
-    const currentInvestment = componentData.invested.toNumber()
+    const currentInvestment = agglomerator.value.totalInvestedNM.toNumber()
     
-    // Exponential cost scaling
-    return Math.floor(baseCost * Math.pow(1.5, currentInvestment / 100) * amount)
+    // Calculate cumulative cost for multiple investments
+    let totalCost = 0
+    for (let i = 0; i < amount; i++) {
+      const investmentLevel = currentInvestment + i
+      totalCost += Math.floor(baseCost * Math.pow(1.5, investmentLevel / 100))
+    }
+    
+    return totalCost
+  }
+  
+  // Reset agglomerator investments and get refund
+  function resetInvestments(): boolean {
+    // Calculate refund (50% of total investment)
+    const refund = totalInvestment.value.mul(0.5).toNumber()
+    
+    // Reset agglomerator
+    agglomerator.value = {
+      totalInvestedNM: ZERO,
+      level: 1,
+      efficiency: 1.0
+    }
+    
+    // Reset all component allocations
+    componentAllocations.value.forEach(comp => {
+      comp.allocatedNM = ZERO
+      comp.proportion = 0
+      comp.isPerfect = false
+    })
+    
+    // Deactivate current nebula
+    activeNebula.value = null
+    
+    // Give refund
+    gameStore.nebularEssence += refund
+    
+    // Recalculate proportions (will all be 0)
+    calculateProportions()
+    
+    return true
   }
   
   // Reset functions
   function reset() {
-    components.value.forEach(comp => {
-      comp.invested = ZERO
+    agglomerator.value = {
+      totalInvestedNM: ZERO,
+      level: 1,
+      efficiency: 1.0
+    }
+    componentAllocations.value.forEach(comp => {
+      comp.allocatedNM = ZERO
       comp.proportion = 0
+      comp.isPerfect = false
     })
     activeNebula.value = null
     discoveredNebulae.value = []
@@ -300,9 +493,15 @@ export const useNebulaStore = defineStore('nebula', () => {
   
   function softReset() {
     // Keep discovered nebulae but reset investments
-    components.value.forEach(comp => {
-      comp.invested = ZERO
+    agglomerator.value = {
+      totalInvestedNM: ZERO,
+      level: 1,
+      efficiency: 1.0
+    }
+    componentAllocations.value.forEach(comp => {
+      comp.allocatedNM = ZERO
       comp.proportion = 0
+      comp.isPerfect = false
     })
     activeNebula.value = null
   }
@@ -316,10 +515,16 @@ export const useNebulaStore = defineStore('nebula', () => {
   // Save/Load functions
   function save() {
     return {
-      components: components.value.map(comp => ({
+      agglomerator: {
+        totalInvestedNM: agglomerator.value.totalInvestedNM.toString(),
+        level: agglomerator.value.level,
+        efficiency: agglomerator.value.efficiency
+      },
+      componentAllocations: componentAllocations.value.map(comp => ({
         component: comp.component,
-        invested: comp.invested.toString(),
-        proportion: comp.proportion
+        allocatedNM: comp.allocatedNM.toString(),
+        proportion: comp.proportion,
+        isPerfect: comp.isPerfect
       })),
       activeNebula: activeNebula.value,
       discoveredNebulae: discoveredNebulae.value,
@@ -334,13 +539,23 @@ export const useNebulaStore = defineStore('nebula', () => {
     if (!saveData) return
     
     try {
-      // Load component investments
-      if (saveData.components && Array.isArray(saveData.components)) {
-        saveData.components.forEach((savedComp: any) => {
-          const component = components.value.find(c => c.component === savedComp.component)
+      // Load agglomerator data
+      if (saveData.agglomerator) {
+        agglomerator.value = {
+          totalInvestedNM: D(saveData.agglomerator.totalInvestedNM || 0),
+          level: saveData.agglomerator.level || 1,
+          efficiency: saveData.agglomerator.efficiency || 1.0
+        }
+      }
+      
+      // Load component allocation states
+      if (saveData.componentAllocations && Array.isArray(saveData.componentAllocations)) {
+        saveData.componentAllocations.forEach((savedComp: any) => {
+          const component = componentAllocations.value.find(c => c.component === savedComp.component)
           if (component) {
-            component.invested = D(savedComp.invested || 0)
+            component.allocatedNM = D(savedComp.allocatedNM || 0)
             component.proportion = savedComp.proportion || 0
+            component.isPerfect = savedComp.isPerfect || false
           }
         })
       }
@@ -377,24 +592,31 @@ export const useNebulaStore = defineStore('nebula', () => {
   return {
     // State
     nebulaMaterial,
-    components,
+    agglomerator,
+    componentAllocations,
     activeNebula,
     discoveredNebulae,
     nebulaConfigurations,
     
     // Computed
     totalInvestment,
+    totalAllocated,
+    availableAllocation,
     materialProductionRate,
     currentBonuses,
     currentPenalties,
     
     // Actions
+    investInAgglomerator,
+    allocateToComponent,
+    canAllocateToComponent,
     canInvestInComponent,
-    investInComponent,
     activateNebula,
     deactivateNebula,
     getInvestmentCost,
+    resetInvestments,
     calculateProportions,
+    checkPerfectRatios,
     checkNebulaFormation,
     tick,
     reset,
