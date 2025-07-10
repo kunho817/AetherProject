@@ -12,7 +12,7 @@
       <GameHeader @openSettings="showSettings = true" />
       
       <!-- Main Content Container -->
-      <div class="main-container">
+      <div class="main-container" :class="{ 'has-side-panel': showPerformanceMonitor }">
         
         <!-- Primary Game Content -->
         <div class="game-content">
@@ -108,54 +108,8 @@
         </div>
         
         <!-- Side Panel -->
-        <div class="side-panel" @mouseenter="handleSidePanelHover(true)" @mouseleave="handleSidePanelHover(false)">
-          <div class="panel-section production-info-section" :class="{ 'expanded': showProductionInfo }">
-            <h3 class="panel-title clickable" @click="toggleProductionInfo">
-              Production Info
-              <span class="expand-icon" :class="{ 'rotated': showProductionInfo }">▼</span>
-            </h3>
-            <div class="production-info-container" :class="{ 'visible': showProductionInfo }">
-              <ProductionInfo />
-            </div>
-          </div>
-          
+        <div class="side-panel" v-if="showPerformanceMonitor">
           <div class="panel-section">
-            <h3 class="panel-title">Quick Actions</h3>
-            <div class="quick-actions">
-              <EnhancedButton
-                v-if="gameStore.canStarburst"
-                variant="primary"
-                size="medium"
-                @click="performStarburst"
-                :particles="true"
-                :glow="true"
-              >
-                Starburst
-              </EnhancedButton>
-              
-              <EnhancedButton
-                v-if="gameStore.canGetStarlight"
-                variant="secondary"
-                size="medium"
-                @click="performStarlightReset"
-                :particles="true"
-                :glow="true"
-              >
-                Get Starlight
-              </EnhancedButton>
-              
-              <EnhancedButton
-                variant="ghost"
-                size="small"
-                @click="saveGame"
-                :clickEffect="true"
-              >
-                Save Game
-              </EnhancedButton>
-            </div>
-          </div>
-          
-          <div class="panel-section" v-if="showPerformanceMonitor">
             <h3 class="panel-title">Performance</h3>
             <PerformanceMonitor />
           </div>
@@ -210,8 +164,6 @@ import CondensationSystem from '@/components/game/CondensationSystem.vue'
 import ResetSystem from '@/components/game/ResetSystem.vue'
 
 // UI Components
-import ProductionInfo from '@/components/ui/ProductionInfo.vue'
-import EnhancedButton from '@/components/ui/EnhancedButton.vue'
 import AchievementNotification from '@/components/ui/AchievementNotification.vue'
 import PerformanceMonitor from '@/components/ui/PerformanceMonitor.vue'
 
@@ -244,8 +196,6 @@ try {
 const showSettings = ref(false)
 const showPerformanceMonitor = ref(false)
 const initError = ref<string | null>(null)
-const showProductionInfo = ref(false)
-const productionInfoHoverTimeout = ref<number | null>(null)
 
 // Define Glare Layer tabs with visibility conditions
 const glareTabs = computed(() => [
@@ -279,52 +229,7 @@ function handleTabChange(tabId: string) {
   console.log('Tab changed to:', tabId)
 }
 
-function toggleProductionInfo() {
-  showProductionInfo.value = !showProductionInfo.value
-}
 
-function handleSidePanelHover(isHovering: boolean) {
-  if (productionInfoHoverTimeout.value) {
-    clearTimeout(productionInfoHoverTimeout.value)
-    productionInfoHoverTimeout.value = null
-  }
-  
-  if (isHovering) {
-    // Show production info immediately on hover
-    productionInfoHoverTimeout.value = window.setTimeout(() => {
-      showProductionInfo.value = true
-    }, 300) // 300ms delay before showing
-  } else {
-    // Hide production info after delay when not hovering
-    productionInfoHoverTimeout.value = window.setTimeout(() => {
-      showProductionInfo.value = false
-    }, 1000) // 1s delay before hiding
-  }
-}
-
-function performStarburst() {
-  try {
-    gameStore.performStarburst()
-  } catch (error) {
-    console.error('Starburst error:', error)
-  }
-}
-
-function performStarlightReset() {
-  try {
-    gameStore.performStarlightReset()
-  } catch (error) {
-    console.error('Starlight reset error:', error)
-  }
-}
-
-function saveGame() {
-  try {
-    gameStore.save()
-  } catch (error) {
-    console.error('Save game error:', error)
-  }
-}
 
 // Mobile optimization setup
 onMounted(() => {
@@ -385,9 +290,13 @@ onMounted(() => {
   margin: 0 auto;
   padding: 20px;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr;
   gap: 20px;
   min-height: calc(100vh - 120px);
+}
+
+.main-container.has-side-panel {
+  grid-template-columns: 1fr auto;
 }
 
 .game-content {
@@ -398,6 +307,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 300px;
 }
 
 .panel-section {
@@ -416,59 +326,8 @@ onMounted(() => {
   letter-spacing: 1px;
 }
 
-.panel-title.clickable {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: color 0.3s ease;
-  user-select: none;
-}
 
-.panel-title.clickable:hover {
-  color: var(--accent-blue);
-}
 
-.expand-icon {
-  font-size: 12px;
-  transition: transform 0.3s ease;
-  opacity: 0.7;
-}
-
-.expand-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.production-info-section {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s ease;
-}
-
-.production-info-container {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: all 0.4s ease;
-  overflow: hidden;
-}
-
-.production-info-container.visible {
-  max-height: 500px;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.production-info-section.expanded {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-}
-
-.quick-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 
 .layer-placeholder {
   text-align: center;
@@ -511,7 +370,7 @@ onMounted(() => {
 }
 
 @media (max-width: 1200px) {
-  .main-container {
+  .main-container.has-side-panel {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
   }
@@ -520,6 +379,7 @@ onMounted(() => {
     grid-row: 2;
     flex-direction: row;
     overflow-x: auto;
+    width: auto;
   }
   
   .panel-section {
@@ -533,8 +393,14 @@ onMounted(() => {
     gap: 15px;
   }
   
+  .main-container.has-side-panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+  
   .side-panel {
     flex-direction: column;
+    width: auto;
   }
   
   .panel-section {

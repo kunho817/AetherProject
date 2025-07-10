@@ -2,6 +2,41 @@
   <div class="nebula-coordination-container">
     <h2 class="section-title">Nebula Coordination</h2>
     
+    <!-- Active Nebula Indicator -->
+    <div class="active-nebula-indicator" v-if="activeNebula">
+      <div class="indicator-content">
+        <div class="indicator-icon">
+          <img 
+            :src="getNebulaIconPath(activeNebula)" 
+            :alt="getActiveConfig()?.name"
+            class="indicator-nebula-icon"
+          />
+        </div>
+        <div class="indicator-info">
+          <div class="indicator-title">Active Nebula</div>
+          <div class="indicator-name">{{ getActiveConfig()?.name }}</div>
+          <div class="indicator-status">{{ getActiveStatusText() }}</div>
+        </div>
+        <div class="indicator-effects">
+          <div class="effect-count bonuses" v-if="currentBonuses.length > 0">
+            <span class="count">{{ currentBonuses.length }}</span>
+            <span class="label">Bonuses</span>
+          </div>
+          <div class="effect-count penalties" v-if="currentPenalties.length > 0">
+            <span class="count">{{ currentPenalties.length }}</span>
+            <span class="label">Penalties</span>
+          </div>
+        </div>
+      </div>
+      <div class="indicator-glow"></div>
+    </div>
+    <div class="no-active-nebula" v-else>
+      <div class="no-active-content">
+        <span class="no-active-text">No Active Nebula</span>
+        <span class="no-active-hint">Adjust component ratios to activate a nebula</span>
+      </div>
+    </div>
+    
     <!-- Nebula Material Status -->
     <div class="material-stats">
       <div class="stat-item">
@@ -197,21 +232,35 @@
             </div>
           </div>
           
-          <!-- Activation Button -->
-          <div class="activation-controls" v-if="discoveredNebulae.includes(selectedNebula) && selectedNebula !== activeNebula">
-            <button 
-              class="btn btn-primary activate-nebula-btn"
-              @click="nebulaStore.activateNebula(selectedNebula)"
-            >
-              Activate {{ getNebulaConfig(selectedNebula)?.name }}
-            </button>
+          <!-- Activation Status -->
+          <div class="activation-status" v-if="selectedNebula === activeNebula">
+            <span class="status-active">Currently Active (Auto-Activated)</span>
           </div>
-          <div class="activation-status" v-else-if="selectedNebula === activeNebula">
-            <span class="status-active">Currently Active</span>
+          <div class="activation-info" v-else-if="discoveredNebulae.includes(selectedNebula)">
+            <span class="status-available">Available for Auto-Activation</span>
+            <p class="auto-info">This nebula will automatically activate when your component ratios meet its requirements.</p>
           </div>
         </div>
         <div v-else class="no-selection">
           <p>Click on a nebula to view its details</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Nebula Switch Animation -->
+    <div class="nebula-switch-notification" v-if="showSwitchNotification" :class="{ 'show': showSwitchNotification }">
+      <div class="switch-content">
+        <div class="switch-icon">
+          <img 
+            v-if="lastSwitchedTo"
+            :src="getNebulaIconPath(lastSwitchedTo)" 
+            :alt="getNebulaConfig(lastSwitchedTo)?.name"
+            class="switch-nebula-icon"
+          />
+        </div>
+        <div class="switch-text">
+          <div class="switch-title">Nebula Activated!</div>
+          <div class="switch-name">{{ lastSwitchedTo ? getNebulaConfig(lastSwitchedTo)?.name : '' }}</div>
         </div>
       </div>
     </div>
@@ -503,6 +552,9 @@ const {
 // Local state for UI
 const selectedNebula = ref<NebulaType | null>(activeNebula.value)
 const allNebulaTypes = Object.values(NebulaType)
+const showSwitchNotification = ref(false)
+const lastSwitchedTo = ref<NebulaType | null>(null)
+let notificationTimeout: number | null = null
 
 // Watch for changes in active nebula to auto-select it
 watch(activeNebula, (newActiveNebula, oldActiveNebula) => {
@@ -510,9 +562,13 @@ watch(activeNebula, (newActiveNebula, oldActiveNebula) => {
     // Always select the active nebula when it changes
     selectedNebula.value = newActiveNebula
     
-    // Log auto-switching for user awareness
+    // Show switch notification for auto-switching
     if (oldActiveNebula && oldActiveNebula !== newActiveNebula) {
+      showSwitchAnimation(newActiveNebula)
       console.log(`Nebula auto-switched: ${oldActiveNebula} → ${newActiveNebula}`)
+    } else if (!oldActiveNebula) {
+      // First activation
+      showSwitchAnimation(newActiveNebula)
     }
   } else if (oldActiveNebula && !newActiveNebula) {
     // Nebula was deactivated - clear selection if it was the deactivated one
@@ -593,6 +649,38 @@ function formatEffectDescription(effect: any): string {
     return `${(effect.baseValue * 100).toFixed(0)}% ${effect.target} cost increase`
   }
   return `${effect.baseValue} ${effect.target}`
+}
+
+function getActiveStatusText(): string {
+  if (!activeNebula.value) return ''
+  
+  const perfectCount = getPerfectCount()
+  const centralPerfect = getCentralComponent()?.isPerfect
+  
+  if (perfectCount === 7) {
+    return 'All Components Perfect!'
+  } else if (centralPerfect) {
+    return `Central Perfect + ${perfectCount}/7 Components`
+  } else if (perfectCount > 0) {
+    return `${perfectCount}/7 Components Perfect`
+  } else {
+    return 'Requirements Met'
+  }
+}
+
+function showSwitchAnimation(nebula: NebulaType): void {
+  lastSwitchedTo.value = nebula
+  showSwitchNotification.value = true
+  
+  // Clear any existing timeout
+  if (notificationTimeout) {
+    clearTimeout(notificationTimeout)
+  }
+  
+  // Hide notification after 3 seconds
+  notificationTimeout = setTimeout(() => {
+    showSwitchNotification.value = false
+  }, 3000)
 }
 
 function getActiveConfig(): NebulaConfiguration | undefined {
@@ -1325,21 +1413,6 @@ function getPerfectMarkerPosition(component: NebulaComponent): number {
   gap: 10px;
 }
 
-.activate-nebula-btn {
-  background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
-  border: none;
-  color: white;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.activate-nebula-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(147, 51, 234, 0.3);
-}
 
 .status-active {
   color: var(--accent-green);
@@ -1940,6 +2013,276 @@ function getPerfectMarkerPosition(component: NebulaComponent): number {
   color: var(--text-muted);
 }
 
+/* Active Nebula Indicator Styles */
+.active-nebula-indicator {
+  position: relative;
+  background: linear-gradient(135deg, 
+    rgba(0, 255, 136, 0.15) 0%, 
+    rgba(0, 255, 136, 0.05) 50%,
+    rgba(147, 51, 234, 0.1) 100%
+  );
+  border: 2px solid rgba(0, 255, 136, 0.4);
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.indicator-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+  z-index: 2;
+}
+
+.indicator-icon {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(0, 255, 136, 0.2);
+  border: 2px solid rgba(0, 255, 136, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  animation: indicatorPulse 2s ease-in-out infinite;
+}
+
+.indicator-nebula-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(1.2) contrast(1.1);
+}
+
+.indicator-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.indicator-title {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.indicator-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00ff88;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.indicator-status {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.indicator-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.effect-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.effect-count.bonuses {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: var(--accent-green);
+}
+
+.effect-count.penalties {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.effect-count .count {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.effect-count .label {
+  opacity: 0.8;
+}
+
+.indicator-glow {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    rgba(0, 255, 136, 0.3) 0%,
+    rgba(0, 255, 136, 0.1) 25%,
+    transparent 50%,
+    rgba(0, 255, 136, 0.1) 75%,
+    rgba(0, 255, 136, 0.3) 100%
+  );
+  border-radius: 12px;
+  animation: indicatorGlow 3s linear infinite;
+  z-index: 1;
+}
+
+@keyframes indicatorPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes indicatorGlow {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.no-active-nebula {
+  background: rgba(60, 60, 60, 0.3);
+  border: 2px dashed rgba(120, 120, 120, 0.5);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.no-active-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+.no-active-text {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.no-active-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.nebula-switch-notification {
+  position: fixed;
+  top: 100px;
+  right: 30px;
+  background: linear-gradient(135deg, 
+    rgba(0, 255, 136, 0.95) 0%, 
+    rgba(0, 200, 100, 0.95) 100%
+  );
+  border: 2px solid #00ff88;
+  border-radius: 12px;
+  padding: 15px 20px;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(0, 255, 136, 0.5);
+  transform: translateX(400px);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1000;
+  color: #000;
+}
+
+.nebula-switch-notification.show {
+  transform: translateX(0);
+}
+
+.switch-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.switch-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.switch-nebula-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.switch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.switch-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+}
+
+.switch-name {
+  font-size: 12px;
+  color: #003d00;
+  font-weight: 600;
+}
+
+.status-available {
+  color: var(--accent-blue);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-available::before {
+  content: '•';
+  font-size: 20px;
+  color: var(--accent-blue);
+}
+
+.auto-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 8px 0 0 0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.activation-info {
+  background: rgba(58, 134, 255, 0.1);
+  border: 1px solid rgba(58, 134, 255, 0.3);
+  border-radius: 6px;
+  padding: 12px;
+}
+
 @media (max-width: 768px) {
   .nebula-coordination-container {
     padding: 15px;
@@ -1969,6 +2312,27 @@ function getPerfectMarkerPosition(component: NebulaComponent): number {
   .material-stats {
     flex-direction: column;
     gap: 10px;
+  }
+  
+  .nebula-switch-notification {
+    right: 15px;
+    left: 15px;
+    transform: translateY(-100px);
+  }
+  
+  .nebula-switch-notification.show {
+    transform: translateY(0);
+  }
+  
+  .indicator-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .indicator-effects {
+    flex-direction: row;
+    justify-content: center;
   }
 }
 </style>
