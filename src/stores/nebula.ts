@@ -372,6 +372,106 @@ export const useNebulaStore = defineStore('nebula', () => {
         }
       }
     }
+    
+    // Auto-switch to better nebula based on current ratios
+    checkForBetterNebula()
+  }
+  
+  function checkForBetterNebula() {
+    // Only auto-switch if we have some allocation
+    if (totalAllocated.value.eq(0)) return
+    
+    // Check if current active nebula still meets its requirements
+    let currentNebulaValid = false
+    if (activeNebula.value) {
+      const currentConfig = nebulaConfigurations.value.find(c => c.type === activeNebula.value)
+      if (currentConfig) {
+        currentNebulaValid = currentConfig.requirements.every(req => {
+          const component = componentAllocations.value.find(c => c.component === req.component)
+          if (!component) return false
+          return component.proportion >= req.minPercent && component.proportion <= req.maxPercent
+        })
+      }
+    }
+    
+    // Find all nebulae that meet their requirements with current ratios
+    const validNebulae: NebulaType[] = []
+    
+    for (const nebulaType of discoveredNebulae.value) {
+      const config = nebulaConfigurations.value.find(c => c.type === nebulaType)
+      if (!config) continue
+      
+      // Check if current ratios meet this nebula's requirements
+      const meetsRequirements = config.requirements.every(req => {
+        const component = componentAllocations.value.find(c => c.component === req.component)
+        if (!component) return false
+        return component.proportion >= req.minPercent && component.proportion <= req.maxPercent
+      })
+      
+      if (meetsRequirements) {
+        validNebulae.push(nebulaType)
+      }
+    }
+    
+    // Auto-switching logic based on requirements
+    if (validNebulae.length === 0) {
+      // No valid nebulae - deactivate current if it's also invalid
+      if (!currentNebulaValid && activeNebula.value) {
+        const oldNebula = activeNebula.value
+        activeNebula.value = null
+        console.log(`Deactivated ${oldNebula} - no longer meets requirements`)
+      }
+    } else if (!currentNebulaValid || !activeNebula.value) {
+      // Current nebula is invalid or no active nebula - switch to first valid one
+      const newNebula = validNebulae[0]
+      const oldNebula = activeNebula.value
+      activeNebula.value = newNebula
+      console.log(`Auto-switched from ${oldNebula || 'none'} to ${newNebula} - meets requirements`)
+    } else if (validNebulae.length === 1 && validNebulae[0] !== activeNebula.value) {
+      // Only one valid nebula and it's not current - switch to it
+      const newNebula = validNebulae[0]
+      const oldNebula = activeNebula.value
+      activeNebula.value = newNebula
+      console.log(`Auto-switched from ${oldNebula} to ${newNebula} - only valid option`)
+    }
+    // If current nebula is valid and multiple nebulae are valid, stay with current
+    // This prevents unnecessary switching when multiple options are available
+  }
+  
+  function calculatePerfectnessScore(config: NebulaConfiguration): number {
+    let totalScore = 0
+    let perfectCount = 0
+    
+    for (const perfectRatio of config.perfectRatios) {
+      const component = componentAllocations.value.find(c => c.component === perfectRatio.component)
+      if (!component) continue
+      
+      const difference = Math.abs(component.proportion - perfectRatio.ratio)
+      
+      // Perfect components get maximum score
+      if (difference <= 0.5) {
+        totalScore += 100
+        perfectCount++
+      } else {
+        // Score decreases with distance from perfect ratio
+        const score = Math.max(0, 100 - (difference * 2))
+        totalScore += score
+      }
+    }
+    
+    // Bonus points for central component being perfect
+    const centralComponent = componentAllocations.value.find(c => c.component === config.centralComponent)
+    if (centralComponent) {
+      const centralPerfectRatio = config.perfectRatios.find(r => r.component === config.centralComponent)
+      if (centralPerfectRatio) {
+        const centralDiff = Math.abs(centralComponent.proportion - centralPerfectRatio.ratio)
+        if (centralDiff <= 0.5) {
+          totalScore += 50 // Extra bonus for perfect central component
+        }
+      }
+    }
+    
+    return totalScore / config.perfectRatios.length
   }
   
   function activateNebula(type: NebulaType): boolean {

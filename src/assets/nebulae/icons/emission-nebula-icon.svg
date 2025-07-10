@@ -1,0 +1,14 @@
+<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="emissionIconGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ba68c8" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#ba68c8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ba68c8" stop-opacity="0.2"/>
+    </radialGradient>
+  </defs>
+  <circle cx="30" cy="30" r="25" fill="url(#emissionIconGrad)"/>
+  <circle cx="30" cy="30" r="18" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.4"/>
+  <circle cx="30" cy="30" r="12" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.5"/>
+  <circle cx="30" cy="30" r="6" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.6"/>
+  <circle cx="30" cy="30" r="3" fill="#ffffff" opacity="0.9"/>
+</svg>
