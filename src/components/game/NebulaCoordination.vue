@@ -1,41 +1,13 @@
 <template>
   <div class="nebula-coordination-container">
-    <h2 class="section-title">Nebula Coordination</h2>
+    <!-- Background Effects -->
+    <div class="nebula-background-effects">
+      <div class="nebula-particles"></div>
+      <div class="nebula-waves"></div>
+      <div class="nebula-glow"></div>
+    </div>
     
-    <!-- Active Nebula Indicator -->
-    <div class="active-nebula-indicator" v-if="activeNebula">
-      <div class="indicator-content">
-        <div class="indicator-icon">
-          <img 
-            :src="getNebulaIconPath(activeNebula)" 
-            :alt="getActiveConfig()?.name"
-            class="indicator-nebula-icon"
-          />
-        </div>
-        <div class="indicator-info">
-          <div class="indicator-title">Active Nebula</div>
-          <div class="indicator-name">{{ getActiveConfig()?.name }}</div>
-          <div class="indicator-status">{{ getActiveStatusText() }}</div>
-        </div>
-        <div class="indicator-effects">
-          <div class="effect-count bonuses" v-if="currentBonuses.length > 0">
-            <span class="count">{{ currentBonuses.length }}</span>
-            <span class="label">Bonuses</span>
-          </div>
-          <div class="effect-count penalties" v-if="currentPenalties.length > 0">
-            <span class="count">{{ currentPenalties.length }}</span>
-            <span class="label">Penalties</span>
-          </div>
-        </div>
-      </div>
-      <div class="indicator-glow"></div>
-    </div>
-    <div class="no-active-nebula" v-else>
-      <div class="no-active-content">
-        <span class="no-active-text">No Active Nebula</span>
-        <span class="no-active-hint">Adjust component ratios to activate a nebula</span>
-      </div>
-    </div>
+    <h2 class="section-title">Nebula Coordination</h2>
     
     <!-- Nebula Material Status -->
     <div class="material-stats">
@@ -48,475 +20,201 @@
         <span>{{ format(materialProductionRate) }}/s</span>
       </div>
       <div class="stat-item">
-        <span>Total Investment:</span>
-        <span>{{ format(totalInvestment) }}</span>
+        <span>Total Components:</span>
+        <span>{{ format(totalComponentsOwned) }}</span>
       </div>
     </div>
     
-    <!-- Nebula Selection and Information Panel -->
-    <div class="nebula-main-section">
-      <!-- Left: Circular Orbit Nebula Selection -->
-      <div class="nebula-orbit-container">
-        <div class="nebula-orbit">
-          <!-- Central Active Nebula -->
-          <div class="nebula-center">
-            <div 
-              v-if="activeNebula"
-              class="nebula-icon active-nebula-icon"
-              @click="selectedNebula = activeNebula"
-            >
-              <img 
-                :src="getNebulaIconPath(activeNebula)" 
-                :alt="getActiveConfig()?.name || 'Nebula'"
-                class="nebula-icon-img"
-              />
-              <div class="nebula-icon-name">{{ getActiveConfig()?.name }}</div>
-            </div>
-            <div v-else class="nebula-icon empty-nebula-icon">
-              <div class="empty-nebula-text">No Active Nebula</div>
-            </div>
-          </div>
-          
-          <!-- Orbiting Nebula Icons -->
-          <div 
-            v-for="(nebulaType, index) in allNebulaTypes"
-            :key="nebulaType"
-            :class="[
-              'nebula-orbit-item',
-              { 
-                'discovered': discoveredNebulae.includes(nebulaType),
-                'active': activeNebula === nebulaType,
-                'selected': selectedNebula === nebulaType
-              }
-            ]"
-            :style="getOrbitPosition(index)"
-            :data-nebula-type="nebulaType"
-            @click="selectNebula(nebulaType)"
-          >
-            <div class="nebula-icon">
-              <img 
-                :src="getNebulaIconPath(nebulaType)" 
-                :alt="getNebulaConfig(nebulaType)?.name"
-                class="nebula-icon-img"
-                :class="{ 'disabled': !discoveredNebulae.includes(nebulaType) && activeNebula !== nebulaType }"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Right: Nebula Information Panel -->
-      <div class="nebula-info-panel">
-        <div v-if="selectedNebula" class="nebula-details">
-          <h3 class="nebula-info-title">{{ getNebulaConfig(selectedNebula)?.name }}</h3>
-          <p class="nebula-info-description">{{ getNebulaConfig(selectedNebula)?.description }}</p>
-          
-          <!-- Active Status Integration -->
-          <div v-if="selectedNebula === activeNebula" class="nebula-status-section">
-            <h4>Nebula Status - Currently Active</h4>
-            <div class="active-status-content">
-              <div class="perfect-status">
-                <span v-if="getCentralComponent()?.isPerfect" class="perfect-central">
-                  ⭐ Central Component Perfect: 3x Bonus!
-                </span>
-                <span class="perfect-count">
-                  {{ getPerfectCount() }}/7 Components Perfect (+{{ (getPerfectCount() * 20) }}% bonus, -{{ (getPerfectCount() * 10) }}% penalty)
-                </span>
-              </div>
-              <div class="active-effects-summary">
-                <div class="bonuses-summary" v-if="currentBonuses.length > 0">
-                  <span class="effect-label">Active Bonuses:</span>
-                  <span class="effect-count">{{ currentBonuses.length }}</span>
-                </div>
-                <div class="penalties-summary" v-if="currentPenalties.length > 0">
-                  <span class="effect-label">Active Penalties:</span>
-                  <span class="effect-count">{{ currentPenalties.length }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Activation Requirements -->
-          <div class="nebula-activation-section">
-            <h4>Activation Requirements</h4>
-            <div class="activation-requirements">
-              <div class="requirement-item central-requirement">
-                <span class="requirement-label">Central Component:</span>
-                <span class="requirement-value">{{ formatComponentName(getNebulaConfig(selectedNebula)?.centralComponent || NebulaComponent.HYDROGEN) }}</span>
-              </div>
-              <div 
-                v-for="req in getNebulaConfig(selectedNebula)?.requirements"
-                :key="req.component"
-                class="requirement-item"
-              >
-                <span class="requirement-label">{{ formatComponentName(req.component) }}:</span>
-                <span class="requirement-value">{{ req.minPercent }}-{{ req.maxPercent }}%</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Nebula Effects -->
-          <div class="nebula-effects-section">
-            <h4 v-if="selectedNebula === activeNebula">Current Active Effects</h4>
-            <h4 v-else>Effects When Active</h4>
-            <div class="effects-grid">
-              <div class="effects-column">
-                <h5 class="effects-subtitle bonuses-title">Bonuses</h5>
-                <div v-if="selectedNebula === activeNebula && currentBonuses.length > 0">
-                  <div 
-                    v-for="bonus in currentBonuses" 
-                    :key="bonus.type + bonus.target"
-                    class="effect-item bonus-item active-effect"
-                  >
-                    <span class="effect-icon">+</span>
-                    <span class="effect-text">{{ formatEffectValue(bonus) }} {{ bonus.description }}</span>
-                  </div>
-                </div>
-                <div v-else>
-                  <div 
-                    v-for="bonus in getNebulaConfig(selectedNebula)?.bonuses" 
-                    :key="bonus.type + bonus.target"
-                    class="effect-item bonus-item"
-                  >
-                    <span class="effect-icon">+</span>
-                    <span class="effect-text">{{ formatEffectDescription(bonus) }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="effects-column">
-                <h5 class="effects-subtitle penalties-title">Penalties</h5>
-                <div v-if="selectedNebula === activeNebula && currentPenalties.length > 0">
-                  <div 
-                    v-for="penalty in currentPenalties" 
-                    :key="penalty.type + penalty.target"
-                    class="effect-item penalty-item active-effect"
-                  >
-                    <span class="effect-icon">-</span>
-                    <span class="effect-text">{{ formatPenaltyValue(penalty) }} {{ penalty.description }}</span>
-                  </div>
-                </div>
-                <div v-else>
-                  <div 
-                    v-for="penalty in getNebulaConfig(selectedNebula)?.penalties" 
-                    :key="penalty.type + penalty.target"
-                    class="effect-item penalty-item"
-                  >
-                    <span class="effect-icon">-</span>
-                    <span class="effect-text">{{ formatEffectDescription(penalty) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Perfect Ratio Info -->
-          <div class="perfect-ratio-info">
-            <h4>Perfect Component Ratios</h4>
-            <div class="perfect-ratio-grid">
-              <div 
-                v-for="ratio in getNebulaConfig(selectedNebula)?.perfectRatios"
-                :key="ratio.component"
-                class="perfect-ratio-item"
-                :class="{ 'central': ratio.component === getNebulaConfig(selectedNebula)?.centralComponent }"
-              >
-                <span class="ratio-component-name">{{ formatComponentName(ratio.component) }}</span>
-                <span class="ratio-percentage">{{ ratio.ratio }}%</span>
-              </div>
-            </div>
-            <div class="perfect-bonus-note">
-              <p>Perfect ratios provide:</p>
-              <ul>
-                <li>Central component: <strong>3x bonus multiplier</strong></li>
-                <li>Each perfect component: <strong>+20% bonus, -10% penalty</strong></li>
-              </ul>
-            </div>
-          </div>
-          
-          <!-- Activation Status -->
-          <div class="activation-status" v-if="selectedNebula === activeNebula">
-            <span class="status-active">Currently Active (Auto-Activated)</span>
-          </div>
-          <div class="activation-info" v-else-if="discoveredNebulae.includes(selectedNebula)">
-            <span class="status-available">Available for Auto-Activation</span>
-            <p class="auto-info">This nebula will automatically activate when your component ratios meet its requirements.</p>
-          </div>
-        </div>
-        <div v-else class="no-selection">
-          <p>Click on a nebula to view its details</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Nebula Switch Animation -->
-    <div class="nebula-switch-notification" v-if="showSwitchNotification" :class="{ 'show': showSwitchNotification }">
-      <div class="switch-content">
-        <div class="switch-icon">
-          <img 
-            v-if="lastSwitchedTo"
-            :src="getNebulaIconPath(lastSwitchedTo)" 
-            :alt="getNebulaConfig(lastSwitchedTo)?.name"
-            class="switch-nebula-icon"
-          />
-        </div>
-        <div class="switch-text">
-          <div class="switch-title">Nebula Activated!</div>
-          <div class="switch-name">{{ lastSwitchedTo ? getNebulaConfig(lastSwitchedTo)?.name : '' }}</div>
-        </div>
-      </div>
-    </div>
-    
-    
-    <!-- Interstellar Agglomerator Investment -->
-    <div class="investment-section">
-      <h3 class="subsection-title">
-        Interstellar Agglomerator
-        <button 
-          v-if="totalInvestment.gt(0)"
-          class="btn btn-secondary btn-small reset-btn"
-          @click="nebulaStore.resetInvestments"
+    <!-- Main Upgrade Interface -->
+    <div class="upgrade-interface">
+      <!-- Central Hub -->
+      <div class="central-hub">
+        <!-- Coordinator Center -->
+        <div 
+          class="coordinator-center"
+          :class="{ 'active': currentView === 'coordinator' }"
+          @click="setView('coordinator')"
         >
-          Reset (50% refund)
-        </button>
-      </h3>
+          <div class="coordinator-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="coordinator-label">Coordinator</div>
+        </div>
+        
+        <!-- Orbiting Nebula Icons -->
+        <div 
+          v-for="(nebulaType, index) in allNebulaTypes"
+          :key="nebulaType"
+          class="nebula-orbit-item"
+          :class="{ 
+            'unlocked': discoveredNebulae.includes(nebulaType),
+            'active': currentView === nebulaType 
+          }"
+          :style="getOrbitPosition(index)"
+          @click="setView(nebulaType)"
+        >
+          <div class="nebula-icon">
+            <div class="nebula-icon-svg" v-html="getNebulaIconSVG(nebulaType)"></div>
+          </div>
+          <div class="nebula-label">{{ getNebulaDisplayName(nebulaType) }}</div>
+        </div>
+      </div>
       
-      <!-- Single Agglomerator Status -->
-      <div class="agglomerator-status">
-        <div class="agglomerator-info">
-          <div class="agglomerator-header">
-            <div class="agglomerator-name">
-              Interstellar Agglomerator Level {{ agglomerator.level }}
+      <!-- Upgrade Tree Display -->
+      <div class="upgrade-tree-container" v-if="currentUpgrades.length > 0">
+        <h3 class="tree-title">
+          {{ currentView === 'coordinator' ? 'Coordinator Upgrades' : getNebulaDisplayName(currentView as NebulaType) + ' Upgrades' }}
+          <span class="tree-subtitle">{{ currentUpgrades.length }} upgrades available</span>
+        </h3>
+        
+        <div class="upgrade-tree">
+          <div 
+            v-for="tier in upgradesByTier"
+            :key="tier.tierNumber"
+            class="upgrade-tier"
+          >
+            <div 
+              v-for="upgrade in tier.upgrades"
+              :key="upgrade.id"
+              class="upgrade-node"
+              :class="{
+                'purchased': upgradeTreeStore.purchasedUpgrades.has(upgrade.id),
+                'available': canAffordUpgrade(upgrade.id),
+                'locked': !isUpgradeAvailable(upgrade.id)
+              }"
+              :title="upgrade.description"
+              @click="purchaseUpgrade(upgrade.id)"
+            >
+            <div class="upgrade-icon">
+              <div class="upgrade-category-icon" :class="upgrade.category">
+                <div class="category-icon-svg" v-html="getCategoryIconSVG(upgrade.category)"></div>
+              </div>
             </div>
-            <div class="agglomerator-efficiency">
-              {{ (agglomerator.efficiency * 100).toFixed(0) }}% Efficiency
-            </div>
-          </div>
-          
-          <div class="agglomerator-stats">
-            <div class="stat-item">
-              <span>Total Invested:</span>
-              <span>{{ format(agglomerator.totalInvestedNM) }} NM</span>
-            </div>
-            <div class="stat-item">
-              <span>Total Allocated:</span>
-              <span>{{ format(totalAllocated) }} NM</span>
-            </div>
-            <div class="stat-item">
-              <span>Available for Allocation:</span>
-              <span>{{ format(availableAllocation) }} NM</span>
-            </div>
-          </div>
-          
-          <!-- Investment Controls -->
-          <div class="investment-controls">
-            <div class="investment-buttons">
-              <button 
-                class="btn btn-secondary btn-small invest-btn"
-                @click="investInAgglomerator(1)"
-                :disabled="!canInvestInAgglomerator(1)"
-              >
-                +1 NM
-              </button>
-              <button 
-                class="btn btn-secondary btn-small invest-btn"
-                @click="investInAgglomerator(10)"
-                :disabled="!canInvestInAgglomerator(10)"
-              >
-                +10 NM
-              </button>
-              <button 
-                class="btn btn-secondary btn-small invest-btn"
-                @click="investInAgglomerator(100)"
-                :disabled="!canInvestInAgglomerator(100)"
-              >
-                +100 NM
-              </button>
-              <button 
-                class="btn btn-secondary btn-small invest-btn"
-                @click="investInAgglomeratorPercent(0.1)"
-                :disabled="!canInvestInAgglomerator(nebulaMaterial * 0.1)"
-              >
-                +10%
-              </button>
-              <button 
-                class="btn btn-secondary btn-small invest-btn"
-                @click="investInAgglomeratorPercent(0.5)"
-                :disabled="!canInvestInAgglomerator(nebulaMaterial * 0.5)"
-              >
-                +50%
-              </button>
-              <button 
-                class="btn btn-secondary btn-small invest-btn invest-max"
-                @click="investInAgglomeratorMax()"
-                :disabled="nebulaMaterial <= 0"
-              >
-                MAX
-              </button>
+            
+            <div class="upgrade-content">
+              <div class="upgrade-header">
+                <h4 class="upgrade-name">{{ upgrade.name }}</h4>
+                <div class="upgrade-tier">T{{ upgrade.tier }}</div>
+              </div>
+              
+              <p class="upgrade-description">{{ upgrade.description }}</p>
+              
+              <!-- Cost Display -->
+              <div class="upgrade-cost">
+                <div v-if="upgrade.cost.nm" class="cost-item nm-cost">
+                  <span class="cost-label">NM:</span>
+                  <span class="cost-value">{{ format(upgrade.cost.nm) }}</span>
+                </div>
+                
+                <div v-if="upgrade.cost.components" class="component-costs">
+                  <div 
+                    v-for="(amount, component) in upgrade.cost.components"
+                    :key="component"
+                    class="cost-item component-cost"
+                  >
+                    <span class="cost-label">{{ formatComponentName(component as NebulaComponent) }}:</span>
+                    <span class="cost-value">{{ format(amount || 0) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Effects Display -->
+              <div class="upgrade-effects">
+                <div 
+                  v-for="effect in upgrade.effects"
+                  :key="effect.type + effect.target"
+                  class="effect-item"
+                >
+                  {{ effect.description }}
+                </div>
+              </div>
+              
+              <!-- Prerequisites -->
+              <div v-if="upgrade.requires && upgrade.requires.length > 0" class="upgrade-prerequisites">
+                <span class="prereq-label">Requires:</span>
+                <div class="prereq-list">
+                  <span 
+                    v-for="reqId in upgrade.requires"
+                    :key="reqId"
+                    class="prereq-item"
+                    :class="{ 'completed': upgradeTreeStore.purchasedUpgrades.has(reqId) }"
+                  >
+                    {{ getUpgradeName(reqId) }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+      </div>
       
-      <!-- Component Allocation -->
-      <div class="component-allocation-section">
-        <h4 class="subsection-title">
-          Component Allocation
-          <div class="allocation-quick-actions">
-            <button 
-              class="btn btn-secondary btn-small quick-action-btn"
-              @click="balanceAllocations"
-              :disabled="totalAllocated.lte(0)"
-              title="Balance all components equally"
-            >
-              Balance
-            </button>
-            <button 
-              class="btn btn-secondary btn-small quick-action-btn"
-              @click="tryPerfectRatio"
-              :disabled="!activeNebula || totalAllocated.lte(0)"
-              title="Attempt perfect ratio for active nebula"
-            >
-              Perfect Ratio
-            </button>
-          </div>
-        </h4>
-        <div class="components-grid">
+      <!-- Component Purchase Interface -->
+      <div class="component-interface" v-if="currentView === 'coordinator'">
+        <h3 class="component-title">Component Inventory</h3>
+        
+        <div class="component-grid">
           <div 
-            v-for="allocation in componentAllocations"
-            :key="allocation.component"
-            class="component-card"
-            :class="{ 
-              'perfect': allocation.isPerfect, 
-              'central': isComponentCentral(allocation.component),
-              'near-perfect': isNearPerfect(allocation.component)
-            }"
+            v-for="component in allComponents"
+            :key="component"
+            class="component-item"
           >
             <div class="component-header">
-              <div class="component-name">
-                {{ formatComponentName(allocation.component) }}
-                <span v-if="allocation.isPerfect" class="perfect-indicator" title="Perfect ratio achieved!">✦</span>
-                <span v-if="isComponentCentral(allocation.component)" class="central-indicator" title="Central component">⭐</span>
-              </div>
-              <div class="component-proportion">
-                <span class="current-proportion">{{ allocation.proportion.toFixed(1) }}%</span>
-                <span v-if="getPerfectRatio(allocation.component)" class="perfect-ratio">
-                  <span class="ratio-separator">→</span>
-                  <span class="target-ratio" :class="{ 'achieved': allocation.isPerfect }">{{ getPerfectRatio(allocation.component) }}%</span>
-                </span>
-              </div>
+              <h4 class="component-name">{{ formatComponentName(component) }}</h4>
+              <div class="component-owned">{{ format(getComponentAmount(component)) }}</div>
             </div>
             
-            <div class="component-stats">
-              <div class="allocated-amount">
-                <span class="amount-label">Proportion:</span>
-                <span class="amount-value">{{ allocation.proportion.toFixed(1) }}%</span>
-              </div>
-              <div v-if="getPerfectRatio(allocation.component)" class="perfect-hint">
-                <span v-if="allocation.proportion < getPerfectRatio(allocation.component) - 0.5" class="need-more">
-                  Target: {{ getPerfectRatio(allocation.component) }}%
-                </span>
-                <span v-else-if="allocation.proportion > getPerfectRatio(allocation.component) + 0.5" class="need-less">
-                  Target: {{ getPerfectRatio(allocation.component) }}%
-                </span>
-                <span v-else class="perfect-achieved">
-                  Perfect! ✨
-                </span>
+            <div class="component-purchase">
+              <div class="purchase-options">
+                <button 
+                  v-for="option in getComponentPurchaseOptions(component)"
+                  :key="option.amount"
+                  class="purchase-button"
+                  :class="{ 'disabled': !canAffordComponent(component, option.amount) }"
+                  @click="purchaseComponent(component, option.amount)"
+                >
+                  Buy {{ option.amount }}x
+                  <span class="purchase-cost">{{ format(option.currentCost) }} NM</span>
+                </button>
               </div>
             </div>
-            
-            <!-- Allocation Controls -->
-            <div class="allocation-controls">
-              <!-- Quick Adjustment Buttons -->
-              <div class="quick-adjust-buttons">
-                <button 
-                  class="btn btn-secondary btn-small adjust-btn decrease-btn"
-                  @click="adjustAllocation(allocation.component, -10)"
-                  :disabled="allocation.allocatedNM.lte(0)"
-                  title="Decrease by 10%"
-                >
-                  -10%
-                </button>
-                <button 
-                  class="btn btn-secondary btn-small adjust-btn decrease-btn"
-                  @click="adjustAllocation(allocation.component, -1)"
-                  :disabled="allocation.allocatedNM.lte(0)"
-                  title="Decrease by 1%"
-                >
-                  -1%
-                </button>
-                <button 
-                  class="btn btn-secondary btn-small adjust-btn perfect-btn"
-                  @click="setPerfectForComponent(allocation.component)"
-                  :disabled="!canSetPerfect(allocation.component)"
-                  title="Set to perfect ratio"
-                >
-                  Perfect
-                </button>
-                <button 
-                  class="btn btn-secondary btn-small adjust-btn increase-btn"
-                  @click="adjustAllocation(allocation.component, 1)"
-                  :disabled="availableAllocation.lte(0)"
-                  title="Increase by 1%"
-                >
-                  +1%
-                </button>
-                <button 
-                  class="btn btn-secondary btn-small adjust-btn increase-btn"
-                  @click="adjustAllocation(allocation.component, 10)"
-                  :disabled="availableAllocation.lte(0)"
-                  title="Increase by 10%"
-                >
-                  +10%
-                </button>
-              </div>
-              
-              <!-- Allocation Slider -->
-              <div class="allocation-slider enhanced-slider">
-                <div class="slider-track">
-                  <div 
-                    v-if="getPerfectRatio(allocation.component)"
-                    class="perfect-ratio-marker"
-                    :style="{ left: getPerfectMarkerPosition(allocation.component) + '%' }"
-                  >
-                    <div class="marker-line"></div>
-                    <div class="marker-label">{{ getPerfectRatio(allocation.component) }}%</div>
-                  </div>
-                  <input 
-                    type="range" 
-                    :min="0" 
-                    :max="getMaxAllocation(allocation.component)"
-                    :value="getSliderValue(allocation.component)"
-                    @input="setComponentAllocation(allocation.component, parseInt(($event.target as HTMLInputElement).value))"
-                    class="slider"
-                    :class="{ 'near-perfect': isNearPerfect(allocation.component) }"
-                  />
-                </div>
-                <div class="slider-labels">
-                  <span>0%</span>
-                  <span class="current-value">{{ allocation.proportion.toFixed(1) }}%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-              
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Active Effects Summary -->
+    <div class="effects-summary" v-if="currentBonuses.length > 0 || currentPenalties.length > 0">
+      <h3>Active Effects</h3>
+      
+      <div class="effects-grid">
+        <div class="bonuses-section" v-if="currentBonuses.length > 0">
+          <h4>Bonuses</h4>
+          <div class="effect-list">
+            <div 
+              v-for="bonus in currentBonuses"
+              :key="bonus.type + bonus.target"
+              class="effect-item bonus"
+            >
+              <span class="effect-value">{{ formatEffectValue(bonus) }}</span>
+              <span class="effect-description">{{ bonus.description }}</span>
             </div>
-            
-            <div class="component-bar-container">
-              <div class="component-bar">
-                <div 
-                  class="component-fill" 
-                  :style="{ 
-                    width: allocation.proportion + '%', 
-                    background: getComponentColor(allocation.component),
-                    boxShadow: allocation.isPerfect ? `0 0 10px ${getComponentColor(allocation.component)}` : 'none'
-                  }"
-                >
-                  <span v-if="allocation.proportion > 5" class="bar-percentage">{{ allocation.proportion.toFixed(0) }}%</span>
-                </div>
-                <div 
-                  v-if="getPerfectRatio(allocation.component)"
-                  class="perfect-ratio-line"
-                  :style="{ left: getPerfectRatio(allocation.component) + '%' }"
-                ></div>
-              </div>
+          </div>
+        </div>
+        
+        <div class="penalties-section" v-if="currentPenalties.length > 0">
+          <h4>Penalties</h4>
+          <div class="effect-list">
+            <div 
+              v-for="penalty in currentPenalties"
+              :key="penalty.type + penalty.target"
+              class="effect-item penalty"
+            >
+              <span class="effect-value">{{ formatPenaltyValue(penalty) }}</span>
+              <span class="effect-description">{{ penalty.description }}</span>
             </div>
           </div>
         </div>
@@ -526,1005 +224,830 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNebulaStore } from '@/stores/nebula'
+import { useComponentInventoryStore } from '@/stores/componentInventory'
+import { useNebulaUpgradeTreeStore } from '@/stores/nebulaUpgradeTree'
 import { format } from '@/utils/formatting'
-import { NebulaComponent, NebulaType, type NebulaConfiguration } from '@/types/nebula'
+import { NebulaComponent, NebulaType } from '@/types/nebula'
+import type { UpgradeType, UpgradeCategory } from '@/types/nebulaUpgrades'
 
 const nebulaStore = useNebulaStore()
+const componentStore = useComponentInventoryStore()
+const upgradeTreeStore = useNebulaUpgradeTreeStore()
 
 const { 
   nebulaMaterial,
-  agglomerator,
-  componentAllocations,
-  activeNebula,
   discoveredNebulae,
-  nebulaConfigurations,
-  totalInvestment,
-  totalAllocated,
-  availableAllocation,
   materialProductionRate,
   currentBonuses,
   currentPenalties
 } = storeToRefs(nebulaStore)
 
-// Local state for UI
-const selectedNebula = ref<NebulaType | null>(activeNebula.value)
-const allNebulaTypes = Object.values(NebulaType)
-const showSwitchNotification = ref(false)
-const lastSwitchedTo = ref<NebulaType | null>(null)
-let notificationTimeout: number | null = null
+const { totalComponentsOwned } = storeToRefs(componentStore)
 
-// Watch for changes in active nebula to auto-select it
-watch(activeNebula, (newActiveNebula, oldActiveNebula) => {
-  if (newActiveNebula) {
-    // Always select the active nebula when it changes
-    selectedNebula.value = newActiveNebula
-    
-    // Show switch notification for auto-switching
-    if (oldActiveNebula && oldActiveNebula !== newActiveNebula) {
-      showSwitchAnimation(newActiveNebula)
-      console.log(`Nebula auto-switched: ${oldActiveNebula} → ${newActiveNebula}`)
-    } else if (!oldActiveNebula) {
-      // First activation
-      showSwitchAnimation(newActiveNebula)
-    }
-  } else if (oldActiveNebula && !newActiveNebula) {
-    // Nebula was deactivated - clear selection if it was the deactivated one
-    if (selectedNebula.value === oldActiveNebula) {
-      selectedNebula.value = null
-    }
-    console.log(`Nebula deactivated: ${oldActiveNebula} - no longer meets requirements`)
-  }
+// UI State
+const currentView = ref<UpgradeType>('coordinator')
+const allNebulaTypes = Object.values(NebulaType)
+const allComponents = Object.values(NebulaComponent)
+
+// Current upgrades based on selected view
+const currentUpgrades = computed(() => {
+  return upgradeTreeStore.getUpgradesForType(currentView.value)
 })
 
-function formatComponentName(component: NebulaComponent): string {
-  return component.charAt(0).toUpperCase() + component.slice(1)
-}
+// Organize upgrades by tier for tree layout
+const upgradesByTier = computed(() => {
+  const upgrades = currentUpgrades.value
+  const tierMap = new Map<number, typeof upgrades>()
+  
+  // Group upgrades by tier
+  upgrades.forEach(upgrade => {
+    if (!tierMap.has(upgrade.tier)) {
+      tierMap.set(upgrade.tier, [])
+    }
+    tierMap.get(upgrade.tier)!.push(upgrade)
+  })
+  
+  // Convert to sorted array
+  return Array.from(tierMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([tierNumber, upgrades]) => ({
+      tierNumber,
+      upgrades
+    }))
+})
 
-function getComponentColor(component: NebulaComponent): string {
-  const colors = {
-    [NebulaComponent.HYDROGEN]: '#ff6b6b',
-    [NebulaComponent.HELIUM]: '#4ecdc4',
-    [NebulaComponent.CARBON]: '#45b7d1',
-    [NebulaComponent.NITROGEN]: '#96ceb4',
-    [NebulaComponent.OXYGEN]: '#ffa726',
-    [NebulaComponent.SILICON]: '#ba68c8',
-    [NebulaComponent.IRON]: '#f06292'
+// Helper Functions
+function setView(view: UpgradeType): void {
+  // Only allow viewing unlocked nebulae or coordinator
+  if (view === 'coordinator' || discoveredNebulae.value.includes(view as NebulaType)) {
+    currentView.value = view
+    upgradeTreeStore.setSelectedType(view)
   }
-  return colors[component] || '#666'
 }
 
-function getNebulaIconPath(nebulaType: NebulaType): string {
-  // Using simplified icon versions for the circular orbit UI
-  const assetMap = {
-    [NebulaType.STELLAR_NURSERY]: '/src/assets/nebulae/icons/stellar-nursery-icon.svg',
-    [NebulaType.PLANETARY_NEBULA]: '/src/assets/nebulae/icons/planetary-nebula-icon.svg',
-    [NebulaType.SUPERNOVA_REMNANT]: '/src/assets/nebulae/icons/supernova-remnant-icon.svg',
-    [NebulaType.DARK_NEBULA]: '/src/assets/nebulae/icons/dark-nebula-icon.svg',
-    [NebulaType.REFLECTION_NEBULA]: '/src/assets/nebulae/icons/reflection-nebula-icon.svg',
-    [NebulaType.EMISSION_NEBULA]: '/src/assets/nebulae/icons/emission-nebula-icon.svg',
-    [NebulaType.ABSORPTION_NEBULA]: '/src/assets/nebulae/icons/absorption-nebula-icon.svg'
-  }
-  return assetMap[nebulaType] || '/src/assets/nebulae/icons/stellar-nursery-icon.svg'
-}
-
-function getOrbitPosition(index: number): Record<string, string> {
-  const totalNebulae = allNebulaTypes.length
-  const angle = (index * 360) / totalNebulae - 90 // Start from top
-  const radius = 120 // Distance from center
-  const radian = (angle * Math.PI) / 180
-  const x = Math.cos(radian) * radius
-  const y = Math.sin(radian) * radius
+function getOrbitPosition(index: number): { transform: string } {
+  const total = allNebulaTypes.length
+  const angle = (index * 360) / total
+  const radius = 120
+  const x = Math.cos((angle * Math.PI) / 180) * radius
+  const y = Math.sin((angle * Math.PI) / 180) * radius
   
   return {
     transform: `translate(${x}px, ${y}px)`
   }
 }
 
-function selectNebula(nebulaType: NebulaType): void {
-  selectedNebula.value = nebulaType
-  
-  // Add a brief highlight effect when clicking
-  const nebulaElement = document.querySelector(`[data-nebula-type="${nebulaType}"]`)
-  if (nebulaElement) {
-    nebulaElement.classList.add('just-clicked')
-    setTimeout(() => {
-      nebulaElement.classList.remove('just-clicked')
-    }, 500)
+// Note: SVG icons are now inlined in getNebulaIconSVG function
+
+function getNebulaDisplayName(nebulaType: NebulaType): string {
+  return nebulaType.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ')
+}
+
+function formatComponentName(component: NebulaComponent): string {
+  return component.charAt(0).toUpperCase() + component.slice(1)
+}
+
+function getCategoryIconSVG(category: UpgradeCategory): string {
+  const icons = {
+    unlock: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="11" width="18" height="10" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+      <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 1v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`,
+    bonus: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="currentColor"/>
+    </svg>`,
+    penalty: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" fill="none"/>
+      <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+    special: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="currentColor" opacity="0.3"/>
+      <circle cx="12" cy="12" r="3" fill="currentColor"/>
+    </svg>`,
+    component: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="2"/>
+    </svg>`,
+    global: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+      <path d="M2 12h20" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" stroke-width="2"/>
+    </svg>`
+  }
+  return icons[category] || `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+    <circle cx="9" cy="9" r="2" stroke="currentColor" stroke-width="2"/>
+    <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" stroke="currentColor" stroke-width="2"/>
+  </svg>`
+}
+
+// Component Functions
+function purchaseComponent(component: NebulaComponent, amount: number): void {
+  nebulaStore.purchaseComponent(component, amount)
+}
+
+function canAffordComponent(component: NebulaComponent, amount: number): boolean {
+  return nebulaStore.canAffordComponent(component, amount)
+}
+
+function getComponentAmount(component: NebulaComponent) {
+  return nebulaStore.getComponentAmount(component)
+}
+
+function getComponentPurchaseOptions(component: NebulaComponent) {
+  return componentStore.getComponentPurchaseOptions(component)
+}
+
+// Upgrade Functions
+function purchaseUpgrade(upgradeId: string): void {
+  if (canAffordUpgrade(upgradeId) && isUpgradeAvailable(upgradeId)) {
+    nebulaStore.purchaseUpgrade(upgradeId)
   }
 }
 
-function formatEffectDescription(effect: any): string {
-  if (effect.type === 'production_multiplier') {
-    return `${effect.baseValue}× ${effect.target} production`
-  } else if (effect.type === 'cost_reduction') {
-    return `${(effect.baseValue * 100).toFixed(0)}% ${effect.target} cost reduction`
-  } else if (effect.type === 'starecho_threshold') {
-    return `${effect.baseValue}× Star Echo activation threshold`
-  } else if (effect.type === 'production_reduction') {
-    return `${(effect.baseValue * 100).toFixed(0)}% ${effect.target} production reduction`
-  } else if (effect.type === 'cost_increase') {
-    return `${(effect.baseValue * 100).toFixed(0)}% ${effect.target} cost increase`
-  }
-  return `${effect.baseValue} ${effect.target}`
+function canAffordUpgrade(upgradeId: string): boolean {
+  return nebulaStore.canAffordUpgrade(upgradeId)
 }
 
-function getActiveStatusText(): string {
-  if (!activeNebula.value) return ''
-  
-  const perfectCount = getPerfectCount()
-  const centralPerfect = getCentralComponent()?.isPerfect
-  
-  if (perfectCount === 7) {
-    return 'All Components Perfect!'
-  } else if (centralPerfect) {
-    return `Central Perfect + ${perfectCount}/7 Components`
-  } else if (perfectCount > 0) {
-    return `${perfectCount}/7 Components Perfect`
-  } else {
-    return 'Requirements Met'
-  }
+function isUpgradeAvailable(upgradeId: string): boolean {
+  const upgrade = upgradeTreeStore.findUpgradeById(upgradeId)
+  return upgrade ? upgradeTreeStore.isUpgradeAvailable(upgrade) : false
 }
 
-function showSwitchAnimation(nebula: NebulaType): void {
-  lastSwitchedTo.value = nebula
-  showSwitchNotification.value = true
-  
-  // Clear any existing timeout
-  if (notificationTimeout) {
-    clearTimeout(notificationTimeout)
-  }
-  
-  // Hide notification after 3 seconds
-  notificationTimeout = setTimeout(() => {
-    showSwitchNotification.value = false
-  }, 3000)
+function getUpgradeName(upgradeId: string): string {
+  const upgrade = upgradeTreeStore.findUpgradeById(upgradeId)
+  return upgrade?.name || upgradeId
 }
 
-function getActiveConfig(): NebulaConfiguration | undefined {
-  return nebulaConfigurations.value.find(config => config.type === activeNebula.value)
-}
-
-function getCentralComponent() {
-  const config = getActiveConfig()
-  if (!config) return null
-  return componentAllocations.value.find(c => c.component === config.centralComponent)
-}
-
-function getPerfectCount(): number {
-  return componentAllocations.value.filter(c => c.isPerfect).length
-}
-
-function isComponentCentral(component: NebulaComponent): boolean {
-  return getActiveConfig()?.centralComponent === component
-}
-
-function getPerfectRatio(component: NebulaComponent): number | null {
-  const config = getActiveConfig()
-  if (!config) return null
-  
-  const ratio = config.perfectRatios.find(r => r.component === component)
-  return ratio ? ratio.ratio : null
-}
-
-function getNebulaConfig(type: NebulaType): NebulaConfiguration | undefined {
-  return nebulaConfigurations.value.find(config => config.type === type)
-}
-
+// Effect Formatting
 function formatEffectValue(effect: any): string {
   if (effect.type === 'production_multiplier') {
-    return `${effect.scaledValue.toFixed(1)}× ${effect.target}`
+    return `×${effect.value.toFixed(2)}`
   } else if (effect.type === 'cost_reduction') {
-    return `${((1 - effect.scaledValue) * 100).toFixed(0)}% ${effect.target} cost reduction`
-  } else if (effect.type === 'starecho_threshold') {
-    return `${effect.scaledValue.toFixed(1)}× Star Echo threshold`
+    return `${((1 - effect.value) * 100).toFixed(1)}% cheaper`
   }
-  return `${effect.scaledValue.toFixed(1)} ${effect.target}`
+  return `+${(effect.value * 100).toFixed(1)}%`
 }
 
 function formatPenaltyValue(penalty: any): string {
-  if (penalty.type === 'production_reduction') {
-    return `-${((1 - penalty.scaledValue) * 100).toFixed(0)}% ${penalty.target} production`
-  } else if (penalty.type === 'cost_increase') {
-    return `+${((penalty.scaledValue - 1) * 100).toFixed(0)}% ${penalty.target} costs`
+  if (penalty.type === 'penalty_reduction') {
+    return `${(penalty.value * 100).toFixed(1)}% reduced`
   }
-  return `-${penalty.scaledValue.toFixed(1)} ${penalty.target}`
+  return `${(penalty.value * 100).toFixed(1)}% penalty`
 }
 
-// Agglomerator investment helper functions
-function canInvestInAgglomerator(amount: number): boolean {
-  return nebulaMaterial.value >= amount
-}
-
-function investInAgglomerator(amount: number): void {
-  if (!canInvestInAgglomerator(amount)) return
-  nebulaStore.investInAgglomerator(amount)
-}
-
-function investInAgglomeratorPercent(percent: number): void {
-  const amount = Math.floor(nebulaMaterial.value * percent)
-  investInAgglomerator(amount)
-}
-
-function investInAgglomeratorMax(): void {
-  const amount = nebulaMaterial.value
-  investInAgglomerator(amount)
-}
-
-
-// Slider helper functions
-function getMaxAllocation(component: NebulaComponent): number {
-  return 100 // Always use 0-100 for percentage
-}
-
-function getSliderValue(component: NebulaComponent): number {
-  const allocation = componentAllocations.value.find(a => a.component === component)
-  if (!allocation) return 0
-  
-  return Math.round(allocation.proportion)
-}
-
-function setComponentAllocation(component: NebulaComponent, sliderValue: number): void {
-  const totalValue = totalAllocated.value.toNumber()
-  
-  if (totalValue === 0) {
-    // If no allocation yet, use available investment to start allocating
-    const availableValue = availableAllocation.value.toNumber()
-    if (availableValue > 0) {
-      const targetAmount = Math.floor((sliderValue / 100) * availableValue)
-      nebulaStore.allocateToComponent(component, targetAmount)
-    }
-    return
+// SVG icon loading functions
+function getNebulaIconSVG(nebulaType: NebulaType): string {
+  const icons = {
+    stellar_nursery: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="nurseryGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ff6b6b" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#ff6b6b" stop-opacity="0.3"/>
+        </radialGradient>
+      </defs>
+      <circle cx="30" cy="30" r="25" fill="url(#nurseryGrad)"/>
+      <circle cx="30" cy="30" r="8" fill="#ffffff" opacity="0.9"/>
+      <circle cx="20" cy="20" r="3" fill="#ffffff" opacity="0.7"/>
+      <circle cx="40" cy="25" r="3" fill="#ffffff" opacity="0.7"/>
+      <circle cx="25" cy="40" r="3" fill="#ffffff" opacity="0.7"/>
+    </svg>`,
+    planetary_nebula: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="planetaryGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#4ecdc4" stop-opacity="0.3"/>
+          <stop offset="50%" stop-color="#4ecdc4" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#4ecdc4" stop-opacity="0.2"/>
+        </radialGradient>
+      </defs>
+      <circle cx="30" cy="30" r="25" fill="none" stroke="url(#planetaryGrad)" stroke-width="8"/>
+      <circle cx="30" cy="30" r="5" fill="#ffffff" opacity="0.9"/>
+    </svg>`,
+    supernova_remnant: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="supernovaGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#e74c3c" stop-opacity="1"/>
+          <stop offset="70%" stop-color="#f39c12" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#e74c3c" stop-opacity="0.2"/>
+        </radialGradient>
+      </defs>
+      <circle cx="30" cy="30" r="28" fill="url(#supernovaGrad)"/>
+      <polygon points="30,10 35,20 45,20 37,28 40,38 30,33 20,38 23,28 15,20 25,20" fill="#ffffff" opacity="0.9"/>
+    </svg>`,
+    dark_nebula: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="darkGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#2c3e50" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#34495e" stop-opacity="0.3"/>
+        </radialGradient>
+      </defs>
+      <circle cx="30" cy="30" r="25" fill="url(#darkGrad)"/>
+      <circle cx="25" cy="25" r="2" fill="#9b59b6" opacity="0.8"/>
+      <circle cx="35" cy="20" r="1.5" fill="#9b59b6" opacity="0.6"/>
+      <circle cx="40" cy="35" r="2" fill="#9b59b6" opacity="0.7"/>
+    </svg>`,
+    reflection_nebula: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="reflectionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#3498db" stop-opacity="0.8"/>
+          <stop offset="50%" stop-color="#85c1e9" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#3498db" stop-opacity="0.4"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="30" cy="30" rx="25" ry="20" fill="url(#reflectionGrad)"/>
+      <circle cx="30" cy="30" r="6" fill="#ffffff" opacity="0.9"/>
+      <path d="M15 25 L45 35" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+      <path d="M20 35 L40 25" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+    </svg>`,
+    emission_nebula: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="emissionGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#e67e22" stop-opacity="1"/>
+          <stop offset="60%" stop-color="#f39c12" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#e67e22" stop-opacity="0.2"/>
+        </radialGradient>
+      </defs>
+      <circle cx="30" cy="30" r="26" fill="url(#emissionGrad)"/>
+      <circle cx="30" cy="30" r="4" fill="#ffffff" opacity="1"/>
+      <circle cx="20" cy="25" r="2" fill="#ffffff" opacity="0.8"/>
+      <circle cx="40" cy="35" r="2" fill="#ffffff" opacity="0.8"/>
+      <circle cx="35" cy="15" r="1.5" fill="#ffffff" opacity="0.7"/>
+      <circle cx="15" cy="40" r="1.5" fill="#ffffff" opacity="0.7"/>
+    </svg>`,
+    absorption_nebula: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="absorptionGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#8e44ad" stop-opacity="0.3"/>
+          <stop offset="50%" stop-color="#9b59b6" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#8e44ad" stop-opacity="0.1"/>
+        </radialGradient>
+      </defs>
+      <circle cx="30" cy="30" r="27" fill="url(#absorptionGrad)"/>
+      <circle cx="30" cy="30" r="15" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+      <circle cx="30" cy="30" r="8" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.4"/>
+      <circle cx="30" cy="30" r="3" fill="#ffffff" opacity="0.8"/>
+    </svg>`
   }
-  
-  // Convert percentage to actual amount
-  const targetAmount = Math.floor((sliderValue / 100) * totalValue)
-  nebulaStore.allocateToComponent(component, targetAmount)
+  return icons[nebulaType] || icons.stellar_nursery
 }
-
-// New helper functions for improved UI
-function isNearPerfect(component: NebulaComponent): boolean {
-  const allocation = componentAllocations.value.find(a => a.component === component)
-  const perfectRatio = getPerfectRatio(component)
-  if (!allocation || !perfectRatio) return false
-  
-  const diff = Math.abs(allocation.proportion - perfectRatio)
-  return diff <= 2 && diff > 0.5 // Within 2% but not perfect
-}
-
-
-function balanceAllocations(): void {
-  let totalValue = totalAllocated.value.toNumber()
-  
-  // If no allocation yet, use available investment
-  if (totalValue === 0) {
-    totalValue = availableAllocation.value.toNumber()
-    if (totalValue === 0) return
-  }
-  
-  const equalAmount = Math.floor(totalValue / 7)
-  Object.values(NebulaComponent).forEach(component => {
-    nebulaStore.allocateToComponent(component, equalAmount)
-  })
-}
-
-function tryPerfectRatio(): void {
-  const config = getActiveConfig()
-  if (!config) return
-  
-  let totalValue = totalAllocated.value.toNumber()
-  
-  // If no allocation yet, use available investment
-  if (totalValue === 0) {
-    totalValue = availableAllocation.value.toNumber()
-    if (totalValue === 0) return
-  }
-  
-  // Allocate based on perfect ratios
-  config.perfectRatios.forEach(ratio => {
-    const amount = Math.floor((ratio.ratio / 100) * totalValue)
-    nebulaStore.allocateToComponent(ratio.component, amount)
-  })
-}
-
-function adjustAllocation(component: NebulaComponent, percentChange: number): void {
-  let totalValue = totalAllocated.value.toNumber()
-  
-  // If no allocation yet, use available investment for the base
-  if (totalValue === 0) {
-    totalValue = availableAllocation.value.toNumber()
-    if (totalValue === 0) return
-  }
-  
-  const allocation = componentAllocations.value.find(a => a.component === component)
-  if (!allocation) return
-  
-  const changeAmount = Math.floor((percentChange / 100) * totalValue)
-  const currentAmount = allocation.allocatedNM.toNumber()
-  const newAmount = Math.max(0, currentAmount + changeAmount)
-  
-  nebulaStore.allocateToComponent(component, newAmount)
-}
-
-function setPerfectForComponent(component: NebulaComponent): void {
-  const perfectRatio = getPerfectRatio(component)
-  if (!perfectRatio) return
-  
-  const totalValue = totalAllocated.value.toNumber()
-  if (totalValue === 0) return
-  
-  const targetAmount = Math.floor((perfectRatio / 100) * totalValue)
-  nebulaStore.allocateToComponent(component, targetAmount)
-}
-
-function canSetPerfect(component: NebulaComponent): boolean {
-  const perfectRatio = getPerfectRatio(component)
-  if (!perfectRatio) return false
-  
-  const totalValue = totalAllocated.value.toNumber()
-  const availableValue = availableAllocation.value.toNumber()
-  return totalValue > 0 || availableValue > 0 // Can set perfect if there's something to allocate
-}
-
-function getPerfectMarkerPosition(component: NebulaComponent): number {
-  const perfectRatio = getPerfectRatio(component)
-  if (!perfectRatio) return 0
-  
-  return perfectRatio // Perfect ratio is already a percentage
-}
-
-// All store functions are accessed directly via nebulaStore
 </script>
 
 <style scoped>
 .nebula-coordination-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  background: linear-gradient(135deg, 
-    rgba(157, 78, 221, 0.1) 0%, 
-    rgba(58, 12, 163, 0.1) 25%,
-    rgba(29, 78, 216, 0.1) 50%,
-    rgba(147, 51, 234, 0.1) 75%,
-    rgba(168, 85, 247, 0.1) 100%
-  );
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  border-radius: 12px;
-  box-shadow: 
-    0 0 20px rgba(157, 78, 221, 0.2),
-    inset 0 0 20px rgba(147, 51, 234, 0.1);
   position: relative;
   padding: 20px;
-  overflow-y: auto;
+  background: linear-gradient(135deg, #0a0a2e 0%, #16213e 50%, #0f3460 100%);
+  border-radius: 12px;
+  color: #ffffff;
+  min-height: 600px;
+}
+
+.nebula-background-effects {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.nebula-particles {
+  background: radial-gradient(2px 2px at 20px 30px, rgba(64, 224, 208, 0.3), transparent),
+              radial-gradient(2px 2px at 40px 70px, rgba(100, 149, 237, 0.2), transparent),
+              radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.3), transparent),
+              radial-gradient(1px 1px at 130px 80px, rgba(64, 224, 208, 0.2), transparent);
+  background-size: 200px 100px;
+  animation: sparkle 8s linear infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.4; }
+}
+
+.nebula-waves {
+  background: linear-gradient(45deg, transparent 40%, rgba(64, 224, 208, 0.1) 50%, transparent 60%);
+  background-size: 50px 50px;
+  animation: waves 10s linear infinite;
+}
+
+@keyframes waves {
+  0% { transform: translateX(-50px) translateY(-50px); }
+  100% { transform: translateX(50px) translateY(50px); }
+}
+
+.nebula-glow {
+  background: radial-gradient(circle at 20% 80%, rgba(64, 224, 208, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(100, 149, 237, 0.1) 0%, transparent 50%);
+  animation: glow 6s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  0% { opacity: 0.1; }
+  100% { opacity: 0.3; }
+}
+
+.nebula-particles,
+.nebula-waves,
+.nebula-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .section-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--accent-green);
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.subsection-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--accent-purple);
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.reset-btn {
-  font-size: 12px;
-  padding: 4px 12px;
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(64, 224, 208, 0.5);
 }
 
 .material-stats {
   display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-bottom: 30px;
   padding: 15px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  border: 1px solid rgba(157, 78, 221, 0.3);
 }
 
 .stat-item {
   display: flex;
-  justify-content: space-between;
-  min-width: 150px;
-  font-size: 14px;
-}
-
-.stat-item span:first-child {
-  color: var(--text-muted);
-}
-
-.stat-item span:last-child {
-  color: var(--text-primary);
-  font-family: 'Roboto Mono', monospace;
-}
-
-.nebula-main-section {
-  display: flex;
-  gap: 20px;
-  min-height: 400px;
-}
-
-.nebula-orbit-container {
-  flex: 0 0 300px;
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at center, rgba(74, 20, 140, 0.2) 0%, rgba(26, 5, 84, 0.3) 100%);
-  border: 1px solid rgba(157, 78, 221, 0.4);
-  border-radius: 12px;
-  padding: 20px;
+  gap: 5px;
 }
 
-.nebula-orbit {
+.upgrade-interface {
   position: relative;
-  width: 260px;
-  height: 260px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 30px;
 }
 
-.nebula-center {
-  position: absolute;
-  width: 100px;
-  height: 100px;
+.central-hub {
+  position: relative;
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 10;
+  align-items: center;
+  height: 300px;
+  margin: 0 auto;
+}
+
+.coordinator-center {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 15px;
+  background: rgba(100, 149, 237, 0.2);
+  border: 2px solid #6495ed;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 80px;
+  height: 80px;
+}
+
+.coordinator-center.active {
+  background: rgba(100, 149, 237, 0.4);
+  box-shadow: 0 0 30px rgba(100, 149, 237, 0.8);
+  animation: coordinatorPulse 2s ease-in-out infinite;
+}
+
+@keyframes coordinatorPulse {
+  0%, 100% { box-shadow: 0 0 30px rgba(100, 149, 237, 0.8); }
+  50% { box-shadow: 0 0 40px rgba(100, 149, 237, 1), 0 0 60px rgba(100, 149, 237, 0.6); }
+}
+
+.coordinator-center:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(100, 149, 237, 0.7);
+}
+
+.coordinator-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #6495ed;
+}
+
+.coordinator-label {
+  font-size: 0.8rem;
+  color: #6495ed;
+  font-weight: bold;
 }
 
 .nebula-orbit-item {
   position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
   width: 60px;
   height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.nebula-orbit-item.unlocked {
+  opacity: 1;
+}
+
+.nebula-orbit-item:not(.unlocked) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nebula-orbit-item.active {
+  transform: scale(1.2);
+}
+
+.nebula-orbit-item.active .nebula-icon {
+  box-shadow: 0 0 20px rgba(64, 224, 208, 0.8);
+  border-color: rgba(64, 224, 208, 0.8);
+}
+
+.nebula-orbit-item.unlocked:hover {
+  transform: scale(1.1);
+}
+
+.nebula-orbit-item.unlocked:hover .nebula-icon {
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
 }
 
 .nebula-icon {
-  width: 100%;
-  height: 100%;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(157, 78, 221, 0.3);
-  padding: 8px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.4);
   transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-
-.active-nebula-icon {
-  width: 100px;
-  height: 100px;
-  background: rgba(147, 51, 234, 0.2);
-  border: 3px solid var(--accent-purple);
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
-  cursor: pointer;
-}
-
-.nebula-icon:hover {
-  transform: scale(1.1);
-  border-color: var(--accent-purple);
-  background: rgba(147, 51, 234, 0.15);
-}
-
-.nebula-orbit-item.discovered .nebula-icon {
-  border-color: rgba(157, 78, 221, 0.6);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-
-.nebula-orbit-item.active .nebula-icon {
-  border-color: #00ff88;
-  border-width: 4px;
-  background: radial-gradient(circle, rgba(0, 255, 136, 0.2) 0%, rgba(0, 255, 136, 0.05) 100%);
-  box-shadow: 
-    0 0 25px rgba(0, 255, 136, 0.9),
-    0 0 50px rgba(0, 255, 136, 0.6),
-    0 0 75px rgba(0, 255, 136, 0.3),
-    inset 0 0 20px rgba(0, 255, 136, 0.15);
-  animation: activePulse 1.5s ease-in-out infinite;
-  transform: scale(1.15);
   position: relative;
-  z-index: 10;
 }
 
+.nebula-icon::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent, rgba(64, 224, 208, 0.6), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: rotate 3s linear infinite;
+}
+
+.nebula-orbit-item:hover .nebula-icon::before,
 .nebula-orbit-item.active .nebula-icon::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  right: -8px;
-  bottom: -8px;
-  border: 2px solid rgba(0, 255, 136, 0.6);
-  border-radius: 50%;
-  animation: activeRing 2s linear infinite;
+  opacity: 1;
 }
 
-.nebula-orbit-item.active .nebula-icon::after {
-  content: '';
-  position: absolute;
-  top: -12px;
-  left: -12px;
-  right: -12px;
-  bottom: -12px;
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  border-radius: 50%;
-  animation: activeRing 3s linear infinite reverse;
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes activePulse {
-  0%, 100% { 
-    box-shadow: 
-      0 0 25px rgba(0, 255, 136, 0.9),
-      0 0 50px rgba(0, 255, 136, 0.6),
-      0 0 75px rgba(0, 255, 136, 0.3),
-      inset 0 0 20px rgba(0, 255, 136, 0.15);
-    transform: scale(1.15);
-  }
-  50% { 
-    box-shadow: 
-      0 0 35px rgba(0, 255, 136, 1),
-      0 0 70px rgba(0, 255, 136, 0.8),
-      0 0 105px rgba(0, 255, 136, 0.5),
-      inset 0 0 30px rgba(0, 255, 136, 0.25);
-    transform: scale(1.2);
-  }
-}
-
-@keyframes activeRing {
-  0% { 
-    transform: rotate(0deg) scale(1);
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% { 
-    transform: rotate(360deg) scale(1.1);
-    opacity: 1;
-  }
-}
-
-.nebula-orbit-item.selected .nebula-icon {
-  border-color: rgba(255, 255, 255, 0.8);
-  border-width: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-  transform: scale(1.05);
-}
-
-.nebula-orbit-item.just-clicked .nebula-icon {
-  animation: clickFlash 0.5s ease-out;
-}
-
-@keyframes clickFlash {
-  0% {
-    box-shadow: 
-      0 0 50px rgba(255, 255, 255, 1),
-      0 0 100px rgba(255, 255, 255, 0.8),
-      inset 0 0 30px rgba(255, 255, 255, 0.3);
-    transform: scale(1.3);
-  }
-  100% {
-    box-shadow: none;
-    transform: scale(1);
-  }
-}
-
-.nebula-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: brightness(1) contrast(1);
-  transition: filter 0.3s ease;
-}
-
-.nebula-icon-img.disabled {
-  filter: grayscale(1) brightness(0.4) contrast(0.8);
-  opacity: 0.5;
-}
-
-.nebula-orbit-item:not(.discovered):not(.active) .nebula-icon-img {
-  filter: grayscale(1) brightness(0.4) contrast(0.8);
-  opacity: 0.5;
-}
-
-.nebula-icon-name {
-  position: absolute;
-  bottom: -20px;
-  font-size: 10px;
-  color: var(--text-primary);
-  white-space: nowrap;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.empty-nebula-icon {
+.nebula-icon-svg {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px dashed rgba(157, 78, 221, 0.3);
-  border-radius: 50%;
 }
 
-.empty-nebula-text {
-  font-size: 12px;
-  color: var(--text-muted);
+.nebula-icon-svg svg {
+  width: 90%;
+  height: 90%;
+}
+
+.nebula-label {
+  font-size: 0.7rem;
   text-align: center;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.nebula-info-panel {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  border-radius: 12px;
+.upgrade-tree-container {
   padding: 20px;
-  overflow-y: auto;
-  max-height: 500px;
-}
-
-.nebula-details {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.nebula-info-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--accent-purple);
-  margin: 0;
-}
-
-.nebula-info-description {
-  color: var(--text-secondary);
-  font-style: italic;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.nebula-activation-section,
-.nebula-effects-section,
-.perfect-ratio-info {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  padding: 15px;
 }
 
-.nebula-activation-section h4,
-.nebula-effects-section h4,
-.perfect-ratio-info h4 {
-  font-size: 14px;
-  color: var(--text-primary);
-  margin: 0 0 10px 0;
-}
-
-.activation-requirements {
+.tree-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #40e0d0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
-.requirement-item {
+.tree-subtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: normal;
+}
+
+.upgrade-tree {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 20px;
+  min-height: 400px;
+}
+
+.upgrade-tier {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.upgrade-tier::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(64, 224, 208, 0.3) 20%, rgba(64, 224, 208, 0.8) 50%, rgba(64, 224, 208, 0.3) 80%, transparent 100%);
+  border-radius: 1px;
+}
+
+.upgrade-tier:first-child::before {
+  display: none;
+}
+
+.upgrade-tier:not(:first-child) {
+  position: relative;
+}
+
+.upgrade-tier:not(:first-child)::after {
+  content: 'Tier ' attr(data-tier);
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(64, 224, 208, 0.2);
+  color: #40e0d0;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border: 1px solid rgba(64, 224, 208, 0.4);
+}
+
+.upgrade-node {
+  position: relative;
+  display: flex;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  width: 320px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.upgrade-node::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(180deg, rgba(64, 224, 208, 0.6) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.upgrade-node:hover::before {
+  opacity: 1;
+}
+
+.upgrade-node:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 8px 40px rgba(64, 224, 208, 0.2);
+}
+
+.upgrade-node.purchased {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0.1) 100%);
+  border-color: #22c55e;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.upgrade-node.purchased::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #22c55e;
+  font-weight: bold;
+  font-size: 1.2rem;
+  text-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+}
+
+.upgrade-node.available {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: availablePulse 2s ease-in-out infinite;
+}
+
+@keyframes availablePulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 4px 30px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+}
+
+.upgrade-node.locked {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.2) 0%, rgba(107, 114, 128, 0.1) 100%);
+  border-color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.6;
+  filter: grayscale(0.8);
+}
+
+.upgrade-node.locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0.7;
+}
+
+.upgrade-icon {
+  margin-right: 15px;
+}
+
+.upgrade-category-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.upgrade-category-icon.unlock {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.3) 0%, rgba(255, 193, 7, 0.1) 100%);
+  border-color: rgba(255, 193, 7, 0.5);
+}
+
+.upgrade-category-icon.bonus {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.upgrade-category-icon.penalty {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(33, 150, 243, 0.1) 100%);
+  border-color: rgba(33, 150, 243, 0.5);
+}
+
+.upgrade-category-icon.special {
+  background: linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(156, 39, 176, 0.1) 100%);
+  border-color: rgba(156, 39, 176, 0.5);
+}
+
+.upgrade-category-icon.component {
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.3) 0%, rgba(255, 87, 34, 0.1) 100%);
+  border-color: rgba(255, 87, 34, 0.5);
+}
+
+.upgrade-category-icon.global {
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.3) 0%, rgba(0, 188, 212, 0.1) 100%);
+  border-color: rgba(0, 188, 212, 0.5);
+}
+
+.category-icon-svg {
+  width: 24px;
+  height: 24px;
+  color: currentColor;
+}
+
+.category-icon-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.upgrade-content {
+  flex: 1;
+}
+
+.upgrade-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+}
+
+.upgrade-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.upgrade-tier {
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 0.8rem;
 }
 
-.central-requirement {
-  background: rgba(147, 51, 234, 0.15);
-  border: 1px solid rgba(147, 51, 234, 0.3);
+.upgrade-description {
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
 }
 
-.requirement-label {
-  color: var(--text-muted);
+.upgrade-cost {
+  margin-bottom: 10px;
 }
 
-.requirement-value {
-  color: var(--accent-green);
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 500;
+.cost-item {
+  display: inline-block;
+  margin-right: 15px;
+  font-size: 0.8rem;
 }
 
-.effects-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+.cost-label {
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.effects-column {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.cost-value {
+  color: #40e0d0;
+  font-weight: bold;
 }
 
-.effects-subtitle {
-  font-size: 12px;
-  font-weight: 600;
-  margin: 0 0 5px 0;
-}
-
-.bonuses-title {
-  color: var(--accent-green);
-}
-
-.penalties-title {
-  color: #ef4444;
+.upgrade-effects {
+  margin-bottom: 10px;
 }
 
 .effect-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 12px;
+  font-size: 0.8rem;
+  color: #22c55e;
+  margin-bottom: 2px;
 }
 
-.bonus-item {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+.upgrade-prerequisites {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.penalty-item {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+.prereq-list {
+  display: inline;
 }
 
-.effect-icon {
-  font-weight: 700;
-  font-size: 14px;
+.prereq-item {
+  margin-right: 10px;
 }
 
-.bonus-item .effect-icon {
-  color: var(--accent-green);
+.prereq-item.completed {
+  color: #22c55e;
 }
 
-.penalty-item .effect-icon {
-  color: #ef4444;
-}
-
-.effect-text {
-  color: var(--text-secondary);
-  flex: 1;
-}
-
-.perfect-ratio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.perfect-ratio-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
+.component-interface {
+  padding: 20px;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(157, 78, 221, 0.2);
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.perfect-ratio-item.central {
-  background: rgba(147, 51, 234, 0.15);
-  border-color: rgba(147, 51, 234, 0.3);
-}
-
-.ratio-component-name {
-  color: var(--text-secondary);
-}
-
-.ratio-percentage {
-  color: var(--accent-green);
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-}
-
-.perfect-bonus-note {
-  margin-top: 15px;
-  padding: 10px;
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  border-radius: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.perfect-bonus-note p {
-  margin: 0 0 5px 0;
-  font-weight: 600;
-}
-
-.perfect-bonus-note ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.perfect-bonus-note li {
-  margin: 3px 0;
-}
-
-.perfect-bonus-note strong {
-  color: var(--accent-green);
-}
-
-.nebula-status-section {
-  background: rgba(147, 51, 234, 0.1);
-  border: 1px solid var(--accent-purple);
   border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
 }
 
-.nebula-status-section h4 {
-  margin: 0 0 10px 0;
-  color: var(--accent-purple);
-  font-size: 14px;
+.component-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #40e0d0;
 }
 
-.active-effect {
-  background: rgba(147, 51, 234, 0.15) !important;
-  border-color: var(--accent-purple) !important;
-  animation: activeEffectPulse 3s ease-in-out infinite;
-}
-
-@keyframes activeEffectPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-
-.activation-controls,
-.activation-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-
-.status-active {
-  color: var(--accent-green);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.status-active::before {
-  content: '•';
-  font-size: 20px;
-}
-
-
-.no-selection {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.active-status-content {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.active-effects-summary {
-  display: flex;
-  gap: 20px;
-  font-size: 14px;
-}
-
-.bonuses-summary,
-.penalties-summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.effect-label {
-  color: var(--text-muted);
-}
-
-.bonuses-summary .effect-count {
-  color: var(--accent-green);
-  font-weight: 600;
-}
-
-.penalties-summary .effect-count {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.perfect-status {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.perfect-central {
-  color: #ffd700;
-  font-weight: 600;
-}
-
-.perfect-count {
-  color: var(--accent-green);
-  font-size: 14px;
-}
-
-.investment-section {
-  flex: 1;
-}
-
-.components-grid {
+.component-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 15px;
 }
 
-.component-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-secondary);
-  border-radius: 8px;
+.component-item {
   padding: 15px;
-  transition: all 0.3s ease;
-}
-
-.component-card.perfect {
-  border-color: #ffd700;
-  background: rgba(255, 215, 0, 0.1);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.component-card.central {
-  border-color: var(--accent-purple);
-  background: rgba(147, 51, 234, 0.1);
-}
-
-.component-card.perfect.central {
-  border-color: #ffd700;
-  background: rgba(255, 215, 0, 0.15);
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-}
-
-.component-card.near-perfect {
-  border-color: rgba(255, 215, 0, 0.5);
-  background: rgba(255, 215, 0, 0.05);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
 }
 
 .component-header {
@@ -1535,804 +1058,99 @@ function getPerfectMarkerPosition(component: NebulaComponent): number {
 }
 
 .component-name {
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  font-size: 1rem;
+  color: #ffffff;
 }
 
-.perfect-indicator {
-  color: #ffd700;
+.component-owned {
+  font-weight: bold;
+  color: #40e0d0;
 }
 
-.central-indicator {
-  color: var(--accent-purple);
-}
-
-.component-proportion {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.current-proportion {
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  color: var(--accent-blue);
-}
-
-.ratio-separator {
-  color: var(--text-muted);
-  font-size: 10px;
-}
-
-.target-ratio {
-  font-family: 'Roboto Mono', monospace;
-  color: var(--text-muted);
-}
-
-.target-ratio.achieved {
-  color: #ffd700;
-  font-weight: 700;
-}
-
-.agglomerator-level {
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 500;
-  color: var(--accent-green);
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-.perfect-ratio {
-  color: var(--accent-green);
-  font-size: 10px;
-}
-
-.investment-controls {
-  margin: 15px 0;
-}
-
-.investment-buttons {
+.purchase-options {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
-.invest-btn {
-  font-size: 11px;
-  padding: 4px 8px;
-  background: rgba(157, 78, 221, 0.2);
-  border: 1px solid rgba(157, 78, 221, 0.5);
+.purchase-button {
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
   border-radius: 4px;
-  color: var(--text-primary);
+  color: #ffffff;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 40px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
-.invest-btn:hover:not(:disabled) {
-  background: rgba(157, 78, 221, 0.4);
-  border-color: rgba(157, 78, 221, 0.8);
+.purchase-button:hover:not(.disabled) {
+  background: rgba(59, 130, 246, 0.4);
 }
 
-.invest-btn:disabled {
+.purchase-button.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.invest-max {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.5);
+.purchase-cost {
+  font-size: 0.8rem;
+  color: #40e0d0;
 }
 
-.invest-max:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.4);
-  border-color: rgba(34, 197, 94, 0.8);
-}
-
-.agglomerator-status {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(157, 78, 221, 0.3);
-  border-radius: 8px;
+.effects-summary {
+  margin-top: 30px;
   padding: 20px;
-  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
 }
 
-.agglomerator-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.agglomerator-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--accent-purple);
-}
-
-.agglomerator-efficiency {
-  font-size: 14px;
-  color: var(--accent-green);
-  font-family: 'Roboto Mono', monospace;
-}
-
-.agglomerator-stats {
-  display: flex;
+.effects-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
-  flex-wrap: wrap;
-  margin-bottom: 15px;
 }
 
-.component-allocation-section {
-  margin-top: 20px;
-}
-
-.allocation-quick-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.quick-action-btn {
-  font-size: 11px;
-  padding: 4px 10px;
-  background: rgba(147, 51, 234, 0.2);
-  border-color: rgba(147, 51, 234, 0.5);
-}
-
-.quick-action-btn:hover:not(:disabled) {
-  background: rgba(147, 51, 234, 0.4);
-  border-color: rgba(147, 51, 234, 0.8);
-}
-
-.allocation-controls {
-  margin: 15px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.quick-adjust-buttons {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-}
-
-.adjust-btn {
-  font-size: 10px;
-  padding: 3px 6px;
-  min-width: unset;
-  border-radius: 3px;
-}
-
-.decrease-btn {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
-}
-
-.decrease-btn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.4);
-  border-color: rgba(239, 68, 68, 0.8);
-}
-
-.increase-btn {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.5);
-}
-
-.increase-btn:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.4);
-  border-color: rgba(34, 197, 94, 0.8);
-}
-
-.perfect-btn {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: rgba(255, 215, 0, 0.5);
-  font-weight: 600;
-}
-
-.perfect-btn:hover:not(:disabled) {
-  background: rgba(255, 215, 0, 0.4);
-  border-color: rgba(255, 215, 0, 0.8);
-}
-
-.enhanced-slider {
-  position: relative;
-}
-
-.slider-track {
-  position: relative;
-  width: 100%;
-  height: 30px;
-  display: flex;
-  align-items: center;
-}
-
-.perfect-ratio-marker {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.marker-line {
-  width: 2px;
-  height: 20px;
-  background: #ffd700;
-  opacity: 0.6;
-}
-
-.marker-label {
-  font-size: 9px;
-  color: #ffd700;
-  font-weight: 600;
-  white-space: nowrap;
-  margin-top: 2px;
-}
-
-.allocation-slider .slider {
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(to right, 
-    rgba(34, 197, 94, 0.1) 0%, 
-    rgba(34, 197, 94, 0.3) 100%
-  );
-  outline: none;
-  -webkit-appearance: none;
-  position: relative;
-  z-index: 2;
-}
-
-.allocation-slider .slider.near-perfect {
-  background: linear-gradient(to right, 
-    rgba(255, 215, 0, 0.1) 0%, 
-    rgba(255, 215, 0, 0.3) 100%
-  );
-}
-
-.allocation-slider .slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent-green);
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.allocation-slider .slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-}
-
-.allocation-slider .slider.near-perfect::-webkit-slider-thumb {
-  background: #ffd700;
-}
-
-.allocation-slider .slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent-green);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.allocation-slider .slider::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-}
-
-.allocation-slider .slider.near-perfect::-moz-range-thumb {
-  background: #ffd700;
-}
-
-.allocation-slider .slider-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 5px;
-}
-
-.slider-labels .current-value {
-  color: var(--accent-green);
-  font-weight: 600;
-}
-
-
-
-.component-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.bonuses-section h4 {
+  color: #22c55e;
   margin-bottom: 10px;
 }
 
-.allocated-amount {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
+.penalties-section h4 {
+  color: #ef4444;
+  margin-bottom: 10px;
 }
 
-.amount-label {
-  color: var(--text-muted);
-}
-
-.amount-value {
-  font-family: 'Roboto Mono', monospace;
-  color: var(--accent-green);
-  font-weight: 500;
-}
-
-.perfect-hint {
-  font-size: 11px;
-  font-style: italic;
-}
-
-.need-more {
-  color: #fbbf24;
-}
-
-.need-less {
-  color: #f87171;
-}
-
-.perfect-achieved {
-  color: #ffd700;
-  font-weight: 600;
-}
-
-.component-bar-container {
-  position: relative;
-  margin-top: 10px;
-}
-
-.component-bar {
-  height: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  overflow: visible;
-  position: relative;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.component-fill {
-  height: 100%;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 4px;
-}
-
-.bar-percentage {
-  font-size: 9px;
-  color: white;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.perfect-ratio-line {
-  position: absolute;
-  top: -2px;
-  bottom: -2px;
-  width: 2px;
-  background: #ffd700;
-  opacity: 0.8;
-  pointer-events: none;
-  z-index: 3;
-  box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
-}
-
-
-.nebula-display {
+.effect-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-}
-
-.nebula-info {
-  text-align: center;
-}
-
-.nebula-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--accent-purple);
-  margin-bottom: 5px;
-}
-
-.nebula-description {
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.nebula-effects {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.bonuses h4, .penalties h4 {
-  font-size: 14px;
-  margin-bottom: 8px;
-  color: var(--text-primary);
+  gap: 8px;
 }
 
 .effect-item {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  justify-content: space-between;
   padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
-  margin-bottom: 5px;
 }
 
 .effect-item.bonus {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-left: 3px solid #22c55e;
 }
 
 .effect-item.penalty {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-left: 3px solid #ef4444;
 }
 
 .effect-value {
-  font-weight: 600;
-  font-family: 'Roboto Mono', monospace;
-}
-
-.effect-item.bonus .effect-value {
-  color: var(--accent-green);
-}
-
-.effect-item.penalty .effect-value {
-  color: #ef4444;
+  font-weight: bold;
 }
 
 .effect-description {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* Active Nebula Indicator Styles */
-.active-nebula-indicator {
-  position: relative;
-  background: linear-gradient(135deg, 
-    rgba(0, 255, 136, 0.15) 0%, 
-    rgba(0, 255, 136, 0.05) 50%,
-    rgba(147, 51, 234, 0.1) 100%
-  );
-  border: 2px solid rgba(0, 255, 136, 0.4);
-  border-radius: 12px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-
-.indicator-content {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  position: relative;
-  z-index: 2;
-}
-
-.indicator-icon {
-  flex-shrink: 0;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: rgba(0, 255, 136, 0.2);
-  border: 2px solid rgba(0, 255, 136, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  animation: indicatorPulse 2s ease-in-out infinite;
-}
-
-.indicator-nebula-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: brightness(1.2) contrast(1.1);
-}
-
-.indicator-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.indicator-title {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.indicator-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: #00ff88;
-  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-}
-
-.indicator-status {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.indicator-effects {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-.effect-count {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.effect-count.bonuses {
-  background: rgba(34, 197, 94, 0.2);
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  color: var(--accent-green);
-}
-
-.effect-count.penalties {
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #ef4444;
-}
-
-.effect-count .count {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.effect-count .label {
-  opacity: 0.8;
-}
-
-.indicator-glow {
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, 
-    rgba(0, 255, 136, 0.3) 0%,
-    rgba(0, 255, 136, 0.1) 25%,
-    transparent 50%,
-    rgba(0, 255, 136, 0.1) 75%,
-    rgba(0, 255, 136, 0.3) 100%
-  );
-  border-radius: 12px;
-  animation: indicatorGlow 3s linear infinite;
-  z-index: 1;
-}
-
-@keyframes indicatorPulse {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
-    transform: scale(1.05);
-  }
-}
-
-@keyframes indicatorGlow {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.no-active-nebula {
-  background: rgba(60, 60, 60, 0.3);
-  border: 2px dashed rgba(120, 120, 120, 0.5);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.no-active-content {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: center;
-}
-
-.no-active-text {
-  font-size: 16px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.no-active-hint {
-  font-size: 13px;
-  color: var(--text-muted);
-  opacity: 0.7;
-  font-style: italic;
-}
-
-.nebula-switch-notification {
-  position: fixed;
-  top: 100px;
-  right: 30px;
-  background: linear-gradient(135deg, 
-    rgba(0, 255, 136, 0.95) 0%, 
-    rgba(0, 200, 100, 0.95) 100%
-  );
-  border: 2px solid #00ff88;
-  border-radius: 12px;
-  padding: 15px 20px;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(0, 255, 136, 0.5);
-  transform: translateX(400px);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 1000;
-  color: #000;
-}
-
-.nebula-switch-notification.show {
-  transform: translateX(0);
-}
-
-.switch-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.switch-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-}
-
-.switch-nebula-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.switch-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.switch-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #000;
-}
-
-.switch-name {
-  font-size: 12px;
-  color: #003d00;
-  font-weight: 600;
-}
-
-.status-available {
-  color: var(--accent-blue);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.status-available::before {
-  content: '•';
-  font-size: 20px;
-  color: var(--accent-blue);
-}
-
-.auto-info {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 8px 0 0 0;
-  line-height: 1.4;
-  font-style: italic;
-}
-
-.activation-info {
-  background: rgba(58, 134, 255, 0.1);
-  border: 1px solid rgba(58, 134, 255, 0.3);
-  border-radius: 6px;
-  padding: 12px;
-}
-
-@media (max-width: 768px) {
-  .nebula-coordination-container {
-    padding: 15px;
-  }
-  
-  .nebula-main-section {
-    flex-direction: column;
-  }
-  
-  .nebula-orbit-container {
-    flex: none;
-    height: 300px;
-  }
-  
-  .nebula-orbit {
-    transform: scale(0.8);
-  }
-  
-  .components-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .effects-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .material-stats {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .nebula-switch-notification {
-    right: 15px;
-    left: 15px;
-    transform: translateY(-100px);
-  }
-  
-  .nebula-switch-notification.show {
-    transform: translateY(0);
-  }
-  
-  .indicator-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 10px;
-  }
-  
-  .indicator-effects {
-    flex-direction: row;
-    justify-content: center;
-  }
+  color: rgba(255, 255, 255, 0.8);
 }
 </style>
